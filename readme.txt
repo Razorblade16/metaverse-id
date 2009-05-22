@@ -3,7 +3,7 @@ Contributors: signpostmarv
 Tags: metaverse, id, hcard, vcard, identity, profile, second life, wow, world of warcraft
 Requires at least: 2.3
 Tested up to: 2.7.1
-Stable tag: 0.6
+Stable tag: 0.6.1
 
 Display your identity from around the metaverse!
 
@@ -15,6 +15,5 @@ Please file feature requests and bugs on http://code.google.com/p/uhu/issues/lis
 
 == Installation ==
 
-1. Upload the `mv-id` directory to the `/wp-content/plugins/` directory
-1. Edit `mv-id/metaverses.php` to include the metaverses you wish to use (see the `mv-id/metaverses/` directory for supported metaverses)
+1. Upload the `metaverse-id` directory to the `/wp-content/plugins/` directory
 1. Activate the plugin through the 'Plugins' menu in WordPress

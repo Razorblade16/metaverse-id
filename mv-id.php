@@ -588,7 +588,11 @@ class mv_id_plugin_widgets
 		}
 	}
 }
-include_once('metaverses.php');
+require_once('metaverses/second-life.php');
+require_once('metaverses/free-realms.php');
+require_once('metaverses/wow.php');
+require_once('metaverses/metaplace.php');
+require_once('metaverses/lotro.php');
 register_activation_hook(__FILE__,'mv_id_plugin::activate');
 register_deactivation_hook(__FILE__,'mv_id_plugin::deactivate');
 add_action('mv_id_plugin__regenerate_cache','mv_id_plugin::cron');
