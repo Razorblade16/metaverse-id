@@ -3,7 +3,8 @@ class mv_id_vcard_lotro extends mv_id_vcard
 {
 	const sprintf_url = '#';
 	const sprintf_img = '%s';
-	const sprintf_description = '\'%1$s of %2$s\' is a level %3$u %6$s %4$s who hails from %5$s%7$s.';
+	const sprintf_description = '\'%1$s of %2$s\' is a level %3$u %6$s %4$s who hails from %5$s.';
+	const sprintf_kinship_url = 'http://my.lotro.com/kinship-%s-%s/';
 	public static function id_format()
 	{
 		return '\'Username of Realm\', e.g. \'Foo of Bar\'';
@@ -16,105 +17,9 @@ class mv_id_vcard_lotro extends mv_id_vcard
 	{
 		return sprintf($sprintf_url,(($level == 80) ? '80' : 'default'),$genderId,$raceId,$classId);
 	}
-	protected static function scrape($url)
+	public static function affiliations_label()
 	{
-		$ch = curl_init($url);
-		curl_setopt_array($ch,array(
-			CURLOPT_FOLLOWLOCATION => true,
-			CURLOPT_RETURNTRANSFER => true,
-		));
-		$data = curl_exec($ch);
-		curl_close($ch);
-		$doc = mv_id_vcard::DOMDocument($data);
-		if($doc instanceof DOMDocument)
-		{
-			unset($data);
-			$xpath = mv_id_vcard::XPath($doc,'./head/title');
-			if($xpath instanceof DOMXPath)
-			{
-				list($name,$realm) = explode(' - ',trim($xpath->item(0)->nodeValue));
-			}
-			else
-			{
-				return false;
-			}
-			$xpath = mv_id_vcard::XPath($doc,'//td[@id="pprofile_avatar"]/div[@class="avatar"]/img[@class="avatar"]');
-			if($xpath instanceof DOMXPath)
-			{
-				$image = $xpath->item(0)->getAttribute('src');
-			}
-			else
-			{
-				return false;
-			}
-			$xpath = mv_id_vcard::XPath($doc,'//div[@id="char_race"]');
-			if($xpath instanceof DOMXPath)
-			{
-				$race = $xpath->item(0)->nodeValue;
-				switch($race)
-				{
-					case 'Race of Man':
-						$race = 'human';
-					break;
-					case 'Dwarf':
-						$race = 'dwarven';
-					break;
-				}
-			}
-			else
-			{
-				return false;
-			}
-			$xpath = mv_id_vcard::XPath($doc,'//div[@id="char_nat"]');
-			if($xpath instanceof DOMXPath)
-			{
-				$nat = $xpath->item(0)->nodeValue;
-			}
-			else
-			{
-				return false;
-			}
-			$xpath = mv_id_vcard::XPath($doc,'//div[@id="char_class"]');
-			if($xpath instanceof DOMXPath)
-			{
-				$class = $xpath->item(0)->nodeValue;
-			}
-			else
-			{
-				return false;
-			}
-			$xpath = mv_id_vcard::XPath($doc,'//div[@id="char_level"]');
-			if($xpath instanceof DOMXPath)
-			{
-				$level = $xpath->item(0)->nodeValue;
-			}
-			else
-			{
-				return false;
-			}
-			$xpath = mv_id_vcard::XPath($doc,'//a[starts-with(@href,"http://my.lotro.com/kinship-elendilmir")]');
-			if($xpath instanceof DOMXPath)
-			{
-				$level = $xpath->item(0)->nodeValue;
-				if($kinship->length !== 1)
-				{
-					$kinship = false;
-				}
-				else
-				{
-					$kinship = $kinship->item(0)->nodeValue;
-				}
-			}
-			else
-			{
-				return false;
-			}
-			$description = sprintf(self::sprintf_description,$name,$realm,$level,$class,$nat,$race,$kinship ? '. ' . $name . ' has a kinship with \'' . $kinship . '\'' : '');
-		}
-		else
-		{
-			return false;
-		}
+		return 'Kinship';
 	}
 	public static function factory($id)
 	{
@@ -211,8 +116,12 @@ class mv_id_vcard_lotro extends mv_id_vcard
 				{
 					return false;
 				}
-				$description = sprintf(self::sprintf_description,$name,$realm,$level,$class,$nat,$race,$kinship ? '. ' . $name . ' has a kinship with \'' . $kinship . '\'' : '');
-				return new self(sprintf('%s_of_%s',$name,$realm),$name,$image,$description,$url);
+				if($kinship !== false)
+				{
+					$kinship = new mv_id_vcard_affiliation($kinship,sprintf(self::sprintf_kinship_url,$realm,str_replace(' ','_',strtolower($kinship))));
+				}
+				$description = sprintf(self::sprintf_description,$name,$realm,$level,$class,$nat,$race);
+				return new self(sprintf('%s_of_%s',$name,$realm),$name,$image,$description,$url,$kinship ? array($kinship) : null);
 			}
 			else
 			{

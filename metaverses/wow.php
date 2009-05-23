@@ -15,6 +15,10 @@ abstract class mv_id_vcard_wow extends mv_id_vcard
 	{
 		return sprintf($sprintf_url,(($level == 80) ? '80' : 'default'),$genderId,$raceId,$classId);
 	}
+	public static function affiliations_label()
+	{
+		return 'Guild';
+	}
 	protected static function scrape($url)
 	{
 		$ch = curl_init($url);
@@ -41,7 +45,11 @@ abstract class mv_id_vcard_wow extends mv_id_vcard
 				}
 				$description = '"' . (string)$prefix . (string)$name . (string)$suffix . '" is a level ' . (string)$level . ' ' . strtolower((string)$gender) . ' ' . (string)$race . ' ' . (string)$class . ', and can be found on the ' . (string)$realm . ' realm.';
 				$url = str_replace('&n=','&amp;n=',$url);
-				return array((string)$name,(string)$description,(string)$genderId,(string)$raceId,(string)$classId,(string)$level,$url);
+				if(isset($guildName) && empty($guildName) === false)
+				{
+					$guild = new mv_id_vcard_affiliation((string)$guildName,substr($url,0,strpos($url,'/character-sheet.xml')) . '/guild-info.xml?r=' . (string)$realm . '&amp;gn=' . urlencode((string)$guildName));
+				}
+				return array((string)$name,(string)$description,(string)$genderId,(string)$raceId,(string)$classId,(string)$level,$url,$guild);
 			}
 			else
 			{
@@ -66,7 +74,8 @@ class mv_id_vcard_wow_eu extends mv_id_vcard_wow
 			{
 				list($name,$description,$genderId,$raceId,$classId,$level,$url) = $data;
 				$image = self::format_image_url('http://eu.wowarmory.com/images/portraits/wow-%s/%u-%u-%u.gif',$genderId,$raceId,$classId,$level);
-				return new self($id,$name,$image,$description,$url);
+				$guild = isset($data[7]) ? array($data[7]) : null;
+				return new self($id,$name,$image,$description,$url,$guild);
 			}
 			else
 			{
@@ -95,7 +104,8 @@ class mv_id_vcard_wow_us extends mv_id_vcard_wow
 			{
 				list($name,$description,$genderId,$raceId,$classId,$level,$url) = $data;
 				$image = self::format_image_url('http://www.wowarmory.com/images/portraits/wow-%s/%u-%u-%u.gif',$genderId,$raceId,$classId,$level);
-				return new self($id,$name,$image,$description);
+				$guild = isset($data[7]) ? array($data[7]) : null;
+				return new self($id,$name,$image,$description,$url,$guild);
 			}
 			else
 			{

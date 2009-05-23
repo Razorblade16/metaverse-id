@@ -3,7 +3,7 @@ Contributors: signpostmarv
 Tags: mv-id, metaverse, id, hcard, vcard, identity, profile, second life, wow, world of warcraft, lotro, metaplace
 Requires at least: 2.3
 Tested up to: 2.7.1
-Stable tag: 0.6.1
+Stable tag: 0.7
 
 Display your identity from around the metaverse!
 

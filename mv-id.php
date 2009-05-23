@@ -3,7 +3,7 @@
 Plugin Name: Metaverse ID
 Plugin URI: http://blog.signpostmarv.name/mv-id/
 Description: Display your identity from around the metaverse!
-Version: 0.6.1
+Version: 0.7
 Author: SignpostMarv Martin
 Author URI: http://blog.signpostmarv.name/
  Copyright 2009 SignpostMarv Martin  (email : mv-id.wp@signpostmarv.name)
@@ -29,17 +29,17 @@ interface mv_id_vcard_funcs
 	public function description();
 	public function url();
 	public static function is_id_valid($id);
+}
+interface mv_id_vcard_widget
+{
 	public static function factory($id);
 	public static function widget(array $args);
+	public static function affiliations_label();
 	public static function id_format();
 }
-abstract class mv_id_vcard implements mv_id_vcard_funcs
+class mv_id_vcard_affiliation implements mv_id_vcard_funcs
 {
-	protected $uid;
-	protected $name;
-	protected $image;
-	protected $description;
-	public function __construct($uid,$name,$image=null,$description=null,$url=null)
+	public function __construct($name,$url=null,$image=null,$description=null,$uid=null)
 	{
 		$this->uid = $uid;
 		$this->name = $name;
@@ -75,26 +75,114 @@ abstract class mv_id_vcard implements mv_id_vcard_funcs
 	{
 		return sprintf(constant(get_class($this) . '::sprintf_img'),$this->img());
 	}
+	public static function is_id_valid($id)
+	{
+		return $id === null;
+	}
+}
+abstract class mv_id_vcard implements mv_id_vcard_funcs, mv_id_vcard_widget
+{
+	protected $uid;
+	protected $name;
+	protected $image;
+	protected $description;
+	protected $affiliations;
+	public function __construct($uid,$name,$image=null,$description=null,$url=null,array $affiliations=null)
+	{
+		$this->uid = $uid;
+		$this->name = $name;
+		$this->image = $image;
+		$this->description = $description;
+		$this->url = $url;
+		if(empty($affiliations) === false)
+		{
+			foreach($affiliations as $k=>$affiliation)
+			{
+				if(($affiliation instanceof mv_id_vcard_affiliation) === false)
+				{
+					unset($affiliations[$k]);
+				}
+			}
+			if(empty($affiliations) === false)
+			{
+				$this->affiliations = $affiliations;
+			}
+		}
+	}
+	public function uid()
+	{
+		return $this->uid;
+	}
+	public function name()
+	{
+		return $this->name;
+	}
+	public function img()
+	{
+		return $this->image;
+	}
+	public function description()
+	{
+		return $this->description;
+	}
+	public function affiliations()
+	{
+		return $this->affiliations;
+	}
+	public function url()
+	{
+		if(isset($this->url) === false)
+		{
+			$this->url = sprintf(constant(get_class($this) . '::sprintf_url'),$this->uid());
+		}
+		return $this->url;
+	}
+	public function image_url()
+	{
+		return sprintf(constant(get_class($this) . '::sprintf_img'),$this->img());
+	}
+	public static function affiliations_label()
+	{
+		return null;
+	}
 	public static function output(mv_id_vcard $vcard)
 	{
 ?>
-					<div class="reviewer item vcard">
-						<a class="url fn summary" rel="me" href="<?php echo $vcard->url(); ?>"><?php echo htmlentities2($vcard->name()); ?></a><br />
-						<span class="uid" style="display:none;"><?php echo $vcard->uid(); ?></span>
+					<div class="hresume">
+						<address class="contact vcard">
+							<a class="url fn summary" rel="me" href="<?php echo $vcard->url(); ?>"><?php echo htmlentities2($vcard->name()); ?></a><br />
+							<span class="uid" style="display:none;"><?php echo $vcard->uid(); ?></span>
 <?php
 					if($vcard->img() !== null)
 					{
 ?>
-						<img class="photo" src="<?php echo $vcard->image_url(); ?>" alt="<?php echo htmlentities2($vcard->name()); ?>"  />
+							<img class="photo" src="<?php echo $vcard->image_url(); ?>" alt="<?php echo htmlentities2($vcard->name()); ?>"  />
 <?php			
 					}
 ?>
+						</address>
 <?php
 					if($vcard->description() !== null)
 					{
 ?>
-						<p class="description"><?php echo str_replace("\n","<br />\n",htmlentities2($vcard->description())); ?></p>
+						<p class="summary"><?php echo str_replace("\n","<br />\n",htmlentities2($vcard->description())); ?></p>
 <?php			
+					}
+					if(is_string(call_user_func(get_class($vcard) . '::affiliations_label')) && is_array($vcard->affiliations()))
+					{
+?>
+						<strong><?php echo htmlentities2(call_user_func(get_class($vcard) . '::affiliations_label')); ?></strong>
+						<ul>
+<?php
+						foreach($vcard->affiliations() as $affiliation)
+						{
+?>
+							<li class="affiliation vcard"><a class="fn url org" href="<?php echo $affiliation->url(); ?>"><?php echo htmlentities($affiliation->name(),ENT_QUOTES,'UTF-8'); ?></a></li>
+<?php
+						}
+?>
+						</ul>
+<?php
 					}
 ?>
 					</div>
@@ -403,6 +491,20 @@ ON DUPLICATE KEY UPDATE
 	public static function admin_actions()
 	{
 		add_options_page('Metaverse ID','Metaverse ID',1,'mv-id','mv_id_plugin::admin');
+		add_filter('plugin_action_links', 'mv_id_plugin::plugin_actions', 10, 2);
+	}
+	public static function plugin_actions($links, $file) {
+		static $this_plugin;
+		if(isset($this_plugin) === false)
+		{
+			$this_plugin = plugin_basename(__FILE__);
+		}
+		if($file === $this_plugin)
+		{
+			$settings_link = '<a href="options-general.php?page=mv-id" style="font-weight:bold;">Manage</a>';
+			$links[] = $settings_link;
+		}
+		return $links;
 	}
 	public static function admin()
 	{
@@ -427,7 +529,7 @@ ON DUPLICATE KEY UPDATE
 			{
 				list($metaverse,$id) = explode('::',$update_this);
 				$vcard = call_user_func_array(self::$metaverse_classes[$metaverse] . '::factory',array($id));
-				if($vcard instanceof mv_id_vcard_funcs)
+				if($vcard instanceof mv_id_vcard_widget)
 				{
 					self::cache($metaverse,$id,$vcard);
 				}
@@ -462,7 +564,7 @@ ON DUPLICATE KEY UPDATE
 				<td><input type="checkbox" name="update[]" value="<?php echo $id->metaverse,'::',$id->id; ?>" title="Update '<?php echo $id->id; ?>' ?" <?php if($vcard === NULL){ ?>checked="checked"<?php } ?> /></td>
 				<td><?php echo self::nice_name($id->metaverse); ?><br /><strong><?php echo $id->id; ?></strong></td>
 				<td><?php
-				if($vcard instanceof mv_id_vcard_funcs)
+				if($vcard instanceof mv_id_vcard_widget)
 				{
 					mv_id_vcard::output($vcard);
 				}
