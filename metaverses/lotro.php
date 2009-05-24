@@ -38,11 +38,11 @@ class mv_id_vcard_lotro extends mv_id_vcard
 			));
 			$data = curl_exec($ch);
 			curl_close($ch);
-			$doc = mv_id_vcard::DOMDocument($data);
+			$doc = mv_id_plugin::DOMDocument($data);
 			if($doc instanceof DOMDocument)
 			{
 				unset($data);
-				$xpath = mv_id_vcard::XPath($doc,'./head/title');
+				$xpath = mv_id_plugin::XPath($doc,'./head/title');
 				if($xpath instanceof DOMNodeList)
 				{
 					list($name,$realm) = explode(' - ',trim($xpath->item(0)->nodeValue));
@@ -51,7 +51,7 @@ class mv_id_vcard_lotro extends mv_id_vcard
 				{
 					return false;
 				}
-				$xpath = mv_id_vcard::XPath($doc,'//td[@id="pprofile_avatar"]/div[@class="avatar"]/img[@class="avatar"]');
+				$xpath = mv_id_plugin::XPath($doc,'//td[@id="pprofile_avatar"]/div[@class="avatar"]/img[@class="avatar"]');
 				if($xpath instanceof DOMNodeList)
 				{
 					$image = $xpath->item(0)->getAttribute('src');
@@ -60,7 +60,7 @@ class mv_id_vcard_lotro extends mv_id_vcard
 				{
 					return false;
 				}
-				$xpath = mv_id_vcard::XPath($doc,'//div[@id="char_race"]');
+				$xpath = mv_id_plugin::XPath($doc,'//div[@id="char_race"]');
 				if($xpath instanceof DOMNodeList)
 				{
 					$race = $xpath->item(0)->nodeValue;
@@ -73,7 +73,7 @@ class mv_id_vcard_lotro extends mv_id_vcard
 				{
 					return false;
 				}
-				$xpath = mv_id_vcard::XPath($doc,'//div[@id="char_nat"]');
+				$xpath = mv_id_plugin::XPath($doc,'//div[@id="char_nat"]');
 				if($xpath instanceof DOMNodeList)
 				{
 					$nat = $xpath->item(0)->nodeValue;
@@ -82,7 +82,7 @@ class mv_id_vcard_lotro extends mv_id_vcard
 				{
 					return false;
 				}
-				$xpath = mv_id_vcard::XPath($doc,'//div[@id="char_class"]');
+				$xpath = mv_id_plugin::XPath($doc,'//div[@id="char_class"]');
 				if($xpath instanceof DOMNodeList)
 				{
 					$class = $xpath->item(0)->nodeValue;
@@ -91,7 +91,7 @@ class mv_id_vcard_lotro extends mv_id_vcard
 				{
 					return false;
 				}
-				$xpath = mv_id_vcard::XPath($doc,'//div[@id="char_level"]');
+				$xpath = mv_id_plugin::XPath($doc,'//div[@id="char_level"]');
 				if($xpath instanceof DOMNodeList)
 				{
 					$level = $xpath->item(0)->nodeValue;
@@ -100,7 +100,7 @@ class mv_id_vcard_lotro extends mv_id_vcard
 				{
 					return false;
 				}
-				$xpath = mv_id_vcard::XPath($doc,'//a[starts-with(@href,"http://my.lotro.com/kinship-elendilmir")]',true);
+				$xpath = mv_id_plugin::XPath($doc,'//a[starts-with(@href,"http://my.lotro.com/kinship-elendilmir")]',true);
 				if($xpath instanceof DOMNodeList)
 				{
 					if($xpath->length !== 1)
@@ -121,7 +121,7 @@ class mv_id_vcard_lotro extends mv_id_vcard
 					$kinship = new mv_id_vcard_affiliation($kinship,sprintf(self::sprintf_kinship_url,$realm,str_replace(' ','_',strtolower($kinship))));
 				}
 				$description = sprintf(self::sprintf_description,$name,$realm,$level,$class,$nat,$race);
-				return new self(sprintf('%s_of_%s',$name,$realm),$name,$image,$description,$url,$kinship ? array($kinship) : null);
+				return new self(sprintf('%s_of_%s',$name,$realm),$name,$image,$description,$url,null,$kinship ? array($kinship) : null);
 			}
 			else
 			{

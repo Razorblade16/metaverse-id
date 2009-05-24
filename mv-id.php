@@ -3,7 +3,7 @@
 Plugin Name: Metaverse ID
 Plugin URI: http://blog.signpostmarv.name/mv-id/
 Description: Display your identity from around the metaverse!
-Version: 0.7
+Version: 0.8
 Author: SignpostMarv Martin
 Author URI: http://blog.signpostmarv.name/
  Copyright 2009 SignpostMarv Martin  (email : mv-id.wp@signpostmarv.name)
@@ -36,6 +36,80 @@ interface mv_id_vcard_widget
 	public static function widget(array $args);
 	public static function affiliations_label();
 	public static function id_format();
+	public function affiliations();
+	public function skills();
+	public function stats();
+}
+interface mv_id_stat_funcs
+{
+	public function name();
+	public function value();
+}
+class mv_id_stat implements mv_id_stat_funcs
+{
+	protected $name;
+	protected $value;
+	public function __construct($name,$value)
+	{
+		$this->name = $name;
+		$this->value = $value;
+	}
+	public function name()
+	{
+		return $this->name;
+	}
+	public function value()
+	{
+		return $this->value;
+	}
+}
+class mv_id_stats
+{
+	protected $stats;
+	public function __construct(array $stats)
+	{
+		if(empty($stats) === false)
+		{
+			$this->stats = array();
+			foreach($stats as $stat)
+			{
+				if($stat instanceof mv_id_stat_funcs)
+				{
+					$this->stats[$stat->name()] = $stat;
+				}
+			}
+		}
+	}
+	public function stats()
+	{
+		return $this->stats;
+	}
+	public function __isset($name)
+	{
+		return isset($this->stats[$name]);
+	}
+	public function __get($name)
+	{
+		return $this->__isset($name) ? $this->stats[$name]->value() : null;
+	}
+}
+interface mv_id_skill_funcs extends mv_id_stat_funcs
+{
+	public function url();
+}
+class mv_id_skill extends mv_id_stat implements mv_id_skill_funcs
+{
+	protected $url;
+	public function __construct($name,$value,$url=null)
+	{
+		$this->name = $name;
+		$this->value = $value;
+		$this->url = $url;
+	}
+	public function url()
+	{
+		return $this->url;
+	}
 }
 class mv_id_vcard_affiliation implements mv_id_vcard_funcs
 {
@@ -87,7 +161,9 @@ abstract class mv_id_vcard implements mv_id_vcard_funcs, mv_id_vcard_widget
 	protected $image;
 	protected $description;
 	protected $affiliations;
-	public function __construct($uid,$name,$image=null,$description=null,$url=null,array $affiliations=null)
+	protected $skills;
+	protected $stats;
+	public function __construct($uid,$name,$image=null,$description=null,$url=null,mv_id_stats $stats=null,array $affiliations=null,array $skills=null)
 	{
 		$this->uid = $uid;
 		$this->name = $name;
@@ -107,6 +183,24 @@ abstract class mv_id_vcard implements mv_id_vcard_funcs, mv_id_vcard_widget
 			{
 				$this->affiliations = $affiliations;
 			}
+		}
+		if(empty($skills) === false)
+		{
+			foreach($skills as $k=>$skill)
+			{
+				if(($skill instanceof mv_id_skill_funcs) === false)
+				{
+					unset($skills[$k]);
+				}
+			}
+			if(empty($skills) === false)
+			{
+				$this->skills = $skills;
+			}
+		}
+		if($stats instanceof mv_id_stats)
+		{
+			$this->stats = $stats;
 		}
 	}
 	public function uid()
@@ -128,6 +222,14 @@ abstract class mv_id_vcard implements mv_id_vcard_funcs, mv_id_vcard_widget
 	public function affiliations()
 	{
 		return $this->affiliations;
+	}
+	public function skills()
+	{
+		return $this->skills;
+	}
+	public function stats()
+	{
+		return $this->stats;
 	}
 	public function url()
 	{
@@ -159,6 +261,12 @@ abstract class mv_id_vcard implements mv_id_vcard_funcs, mv_id_vcard_widget
 							<img class="photo" src="<?php echo $vcard->image_url(); ?>" alt="<?php echo htmlentities2($vcard->name()); ?>"  />
 <?php			
 					}
+					if(isset($vcard->stats()->bday))
+					{
+?>
+							<abbr class="bday" title="<?php echo $vcard->stats()->bday; ?>"><?php echo htmlentities2(mv_id_plugin::bday_label($vcard)),': ',date('jS M, Y',strtotime($vcard->stats()->bday)); ?></abbr>
+<?php
+					}
 ?>
 						</address>
 <?php
@@ -167,6 +275,40 @@ abstract class mv_id_vcard implements mv_id_vcard_funcs, mv_id_vcard_widget
 ?>
 						<p class="summary"><?php echo str_replace("\n","<br />\n",htmlentities2($vcard->description())); ?></p>
 <?php			
+					}
+					if(is_array($vcard->skills()))
+					{
+?>
+						<ul>
+<?php
+						foreach($vcard->skills as $skill)
+						{
+?>
+							<li><?php
+							if(is_string($skill->url()))
+							{
+								?><a class="skill" rel="tag" href="<?php echo $skill->url(); ?>"><?php 
+							}
+							else
+							{
+								?><span class="skill"><?php
+							}
+							echo htmlentities2($skill->name());
+							if(is_string($skill->url()))
+							{
+								?></a> <?php 
+							}
+							else
+							{
+								?></span> <?php
+							}
+							echo htmlentities2($skill->value()); ?></li>
+
+<?php
+						}
+?>
+						</ul>
+<?php
 					}
 					if(is_string(call_user_func(get_class($vcard) . '::affiliations_label')) && is_array($vcard->affiliations()))
 					{
@@ -216,6 +358,9 @@ abstract class mv_id_vcard implements mv_id_vcard_funcs, mv_id_vcard_widget
 			echo $after_widget,"\n";
 		}
 	}
+}
+class mv_id_plugin
+{
 	public static function DOMDocument($data)
 	{
 		$doc = new DOMDocument;
@@ -283,9 +428,19 @@ abstract class mv_id_vcard implements mv_id_vcard_funcs, mv_id_vcard_widget
 			return false;
 		}
 	}
-}
-class mv_id_plugin
-{
+	public static function bday_label(mv_id_vcard_widget $vcard)
+	{
+		switch(get_class($vcard))
+		{
+			case 'mv_id_vcard_agni_sl':
+			case 'mv_id_vcard_teen_sl':
+				return 'Rezday';
+			break;
+			default:
+				return 'Created';
+			break;
+		}
+	}
 	public static function db_tablename()
 	{
 		global $wpdb;

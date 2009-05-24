@@ -13,6 +13,7 @@ class mv_id_vcard_agni_sl extends mv_id_vcard
 	const regex_get_avatar        = '/<img\ alt="profile\ image"\ src="http:\/\/secondlife\.com\/app\/image\/([\w\d\-]{36})\/1"\ class="parcelimg"\ \/>/S';
 	const string_no_avatar                  = '<img alt="profile image" src="http://world.secondlife.com/images/blank.jpg" class="parcelimg" />';
 	const regex_get_description   = '/<p\ class="desc">(.*)<\/p>/S';
+	const regex_get_rezday        = '/Born\ on\:<\/span>\ ([\d]{4}\-[\d]{2}\-[\d]{2})/S';
 	public static function is_id_valid($id)
 	{
 		return (bool)preg_match(self::regex_sl_id,$id);
@@ -66,6 +67,11 @@ class mv_id_vcard_agni_sl extends mv_id_vcard
 			{
 				return null;
 			}
+			$stats = array();
+			if(preg_match(self::regex_get_rezday,$data,$matches) === 1)
+			{
+				$stats[] = new mv_id_stat('bday',$matches[1]);
+			}
 			$image = null;
 			if(strpos($data,self::string_no_avatar) !== false)
 			{
@@ -78,10 +84,10 @@ class mv_id_vcard_agni_sl extends mv_id_vcard
 			$description = null;
 			if(preg_match(self::regex_get_description,$data,$matches) === 1)
 			{
-				$doc = mv_id_vcard::DOMDocument($data);
+				$doc = mv_id_plugin::DOMDocument($data);
 				if($doc instanceof DOMDocument)
 				{
-					$xpath = mv_id_vcard::XPath($doc,'*//meta[@name="description"]');
+					$xpath = mv_id_plugin::XPath($doc,'*//meta[@name="description"]');
 					if($xpath instanceof DOMNodeList)
 					{
 						$description = $xpath->item(0)->getAttribute('content');
@@ -97,7 +103,7 @@ class mv_id_vcard_agni_sl extends mv_id_vcard
 					return false;
 				}
 			}
-			return array($name,$image,$description,$url);
+			return array($name,$image,$description,$url,$stats);
 		}
 	}
 	public static function factory($id)
@@ -105,7 +111,8 @@ class mv_id_vcard_agni_sl extends mv_id_vcard
 		$data = self::scrape(sprintf(self::sprintf_scrape,$id));
 		if(isset($data))
 		{
-			return new self($id,$data[0],$data[1],$data[2],$data[3]);
+			$stats = (isset($data[4]) && empty($data[4]) === false) ? new mv_id_stats($data[4]) : null;
+			return new self($id,$data[0],$data[1],$data[2],$data[3],$stats);
 		}
 		else
 		{
@@ -126,7 +133,8 @@ class mv_id_vcard_teen_sl extends mv_id_vcard_agni_sl
 		$data = self::scrape(sprintf(self::sprintf_scrape,$id));
 		if(isset($data))
 		{
-			return new self($id,$data[0],$data[1],$data[2]);
+			$stats = (isset($data[4]) && empty($data[4]) === false) ? new mv_id_stats($data[4]) : null;
+			return new self($id,$data[0],$data[1],$data[2],$data[3],$stats);
 		}
 		else
 		{

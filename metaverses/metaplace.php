@@ -24,7 +24,7 @@ class mv_id_vcard_metaplace extends mv_id_vcard
 			));
 			$data = curl_exec($ch);
 			curl_close($ch);
-			if((($XML = mv_id_vcard::SimpleXML($data)) instanceof SimpleXMLElement) === false)
+			if((($XML = mv_id_plugin::SimpleXML($data)) instanceof SimpleXMLElement) === false)
 			{
 				return false;
 			}
@@ -35,7 +35,6 @@ class mv_id_vcard_metaplace extends mv_id_vcard
 				$attributes = array();
 				foreach($foo[0]->attributes() as $attribute => $value)
 				{
-					$attributes[$attribute] = $value;
 					$$attribute = $value;
 				}
 				$name = (string)$username;
@@ -48,10 +47,18 @@ class mv_id_vcard_metaplace extends mv_id_vcard
 				$xp['socializer'] = (int)$social_xp;
 				$xp['explorer'] = (int)$play_xp;
 				$xp['builder'] = (int)$build_xp;
+				$skills = array(
+					new mv_id_skill('Socializer',(int)$social_xp),
+					new mv_id_skill('Explorer',(int)$play_xp),
+					new mv_id_skill('Builder',(int)$build_xp),
+				);
+				$stats = new mv_id_stats(array(
+					new mv_id_stat('bday',(string)$registerDate),
+				));
 				arsort($xp);
 				$xp = key($xp);
 				$description = (string)$title . ' ' . $name . ' is a level ' . (string)$level . ' ' . $xp . '.';
-				return new self($id,$name,$image,$description);
+				return new self($id,$name,$image,$description,null,$stats,null,$skills);
 			}
 		}
 		else
