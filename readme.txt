@@ -3,7 +3,7 @@ Contributors: signpostmarv
 Tags: mv-id, metaverse, id, hcard, vcard, identity, profile, second life, wow, world of warcraft, lotro, metaplace
 Requires at least: 2.3
 Tested up to: 2.7.1
-Stable tag: 0.8
+Stable tag: 0.9
 
 Display your identity from around the metaverse!
 
@@ -11,16 +11,17 @@ Display your identity from around the metaverse!
 
 "Metaverse ID" for WordPress is based on the work of the currently retired swslr project. The plugin aims to allow its users to place widgets into the sidebars of their WordPress blogs that let them show of their profiles around the Metaverse.
 
-## Supported Metaverses
+Supported Metaverses
+--------------------
 * Free Realms
 * Lord of the Rings Online
 * Metaplace
 * Second Life
-** Agni/Main Grid
-** Teen Second Life
+ * Agni/Main Grid
+ * Teen Second Life
 * World of Warcraft
-** European servers
-** US Servers
+ * European servers
+ * US Servers
 
 == Installation ==
 
@@ -41,3 +42,30 @@ Display your identity from around the metaverse!
 * DOMDocument (required for Second Life, LOTRO)
 * SimpleXML (required for WoW, Metaplace)
 * JSON decode support (required for Free Realms)
+
+== Changes ==
+
+To-do
+--------------------
+* Give admin-level users ability to delete/update all IDs
+* Delete IDs when user is demoted to subscriber or deleted
+* Add multi-select box to widget options to select which IDs get displayed in the widget.
+
+0.9
+--------------------
+* Moved Metaverse ID page from *Settings* to *Users* section
+* Users above subscriber-level get seperate IDs
+* Widget output strips duplicate IDs
+
+0.8
+--------------------
+Added [Skills](http://microformats.org/wiki/hresume#Skills) & Stats support.
+* Stats are currently only used to supply account creation dates via the [hCard bday property](http://microformats.org/wiki/hcard).
+
+0.7
+--------------------
+Switched from hListing with self-review to [hResume](http://microformats.org/wiki/hresume), adding guilds/groups as "[affiliations](http://microformats.org/wiki/hresume#Affiliations)".
+
+0.6
+--------------------
+Optimised the UI by using javascript to dynamically add more fields instead of using a fixed list of fields (which would take up more and more space with every metaverse that was added).

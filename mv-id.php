@@ -3,7 +3,7 @@
 Plugin Name: Metaverse ID
 Plugin URI: http://blog.signpostmarv.name/mv-id/
 Description: Display your identity from around the metaverse!
-Version: 0.8
+Version: 0.9
 Author: SignpostMarv Martin
 Author URI: http://blog.signpostmarv.name/
  Copyright 2009 SignpostMarv Martin  (email : mv-id.wp@signpostmarv.name)
@@ -347,13 +347,20 @@ abstract class mv_id_vcard implements mv_id_vcard_funcs, mv_id_vcard_widget
 		{
 			extract($args);
 			echo $before_widget,$before_title,htmlentities2(mv_id_plugin::nice_name($metaverse)),$after_title,"\n";
+			$mv_id_hashes = array();
 			foreach($vcards as $k=>$vcard)
 			{
 				if(isset($vcard->cache) === false)
 				{
 					continue;
 				}
-				self::output(unserialize($vcard->cache));
+				$vcard->cache = unserialize($vcard->cache);
+				$mv_id_hash = get_class($vcard->cache) . '::' . $vcard->cache->uid();
+				if(in_array($mv_id_hash,$mv_id_hashes) === false)
+				{
+					$mv_id_hashes[] = $mv_id_hash;
+					self::output($vcard->cache);
+				}
 			}
 			echo $after_widget,"\n";
 		}
@@ -450,13 +457,36 @@ class mv_id_plugin
 	{
 		global $wpdb;
 		$structure = 'CREATE TABLE IF NOT EXISTS ' . self::db_tablename() . ' (
-`metaverse` CHAR( 32) NOT NULL ,
+`user_id` BIGINT( 20 ) UNSIGNED NOT NULL DEFAULT "1",
+`metaverse` CHAR( 32 ) NOT NULL ,
 `id` CHAR( 255 ) NOT NULL ,
 `last_mod` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ,
 `cache` BLOB NULL DEFAULT NULL ,
-PRIMARY KEY ( `metaverse` , `id` )
+PRIMARY KEY ( `user_id`,`metaverse` , `id` )
 )';
 		$wpdb->query($structure);
+		self::upgrade();
+	}
+	protected static function upgrade()
+	{
+		global $wpdb;
+		$alter_sql = 'ALTER TABLE ' . self::db_tablename() . ' ADD `user_id` BIGINT( 20 ) UNSIGNED NOT NULL DEFAULT "1" FIRST, DROP PRIMARY KEY, ADD PRIMARY KEY ( `user_id`, `metaverse`, `id`)';
+		$check_sql = 'SHOW COLUMNS FROM ' . self::db_tablename();
+		$schema = $wpdb->get_results($check_sql);
+		if(empty($schema) === false)
+		{
+			$fields = array();
+			foreach($schema as $field)
+			{
+				$fields[] = $field->Field;
+			}
+			unset($schema);
+			if(in_array('user_id',$fields) === false)
+			{
+				$wpdb->query($alter_sql);
+			}
+			unset($fields);
+		}
 	}
 	protected static function uninstall()
 	{
@@ -510,112 +540,110 @@ PRIMARY KEY ( `metaverse` , `id` )
 	public static function delete($metaverse,$id)
 	{
 		global $wpdb;
+		global $user_ID;
+		get_currentuserinfo();
 		static $delete_sql;
 		if(isset($delete_sql) === false)
 		{
-			$delete_sql = 'DELETE FROM ' . self::db_tablename() . ' WHERE metaverse = %s AND id = %s';
+			$delete_sql = 'DELETE FROM ' . self::db_tablename() . ' WHERE user_ID = %s AND metaverse = %s AND id = %s';
 		}
-		$wpdb->query($wpdb->prepare($delete_sql,$metaverse,$id));
+		$wpdb->query($wpdb->prepare($delete_sql,$user_ID,$metaverse,$id));
 	}
 	public static function add($metaverse,$id)
 	{
-		if(self::nice_name($metaverse) !== false && self::is_id_valid($metaverse,$id) === true)
+		global $user_ID;
+		global $user_level;
+		get_currentuserinfo();
+		if(self::nice_name($metaverse) !== false && self::is_id_valid($metaverse,$id) === true && $user_ID !== '' && $user_level >= 1)
 		{
 			global $wpdb;
 			static $add_sql;
 			if(isset($add_sql) === false)
 			{
 				$add_sql = 
-'INSERT INTO ' . self::db_tablename() . ' (metaverse,id) VALUES(%s,%s)
+'INSERT INTO ' . self::db_tablename() . ' (user_id,metaverse,id) VALUES(%s,%s,%s)
 ON DUPLICATE KEY UPDATE
 	cache=NULL';
 			}
-			$wpdb->query($wpdb->prepare($add_sql,$metaverse,$id));
+			$wpdb->query($wpdb->prepare($add_sql,$user_ID,$metaverse,$id));
 		}
 	}
 	public static function cache($metaverse,$id,mv_id_vcard $vcard) // do not call before add
 	{
-		if(self::nice_name($metaverse) !== false && self::is_id_valid($metaverse,$id) === true)
+		global $user_ID;
+		global $user_level;
+		get_currentuserinfo();
+		if(self::nice_name($metaverse) !== false && self::is_id_valid($metaverse,$id) === true && $user_ID !== '' && $user_level >= 1)
 		{
 			global $wpdb;
 			static $cache_sql;
 			if(isset($cache_sql) === false)
 			{
-				$cache_sql = 'UPDATE ' . self::db_tablename() . ' SET cache = %s WHERE metaverse = %s AND id = %s LIMIT 1';
+				$cache_sql = 'UPDATE ' . self::db_tablename() . ' SET cache = %s WHERE user_id = %s AND metaverse = %s AND id = %s LIMIT 1';
 			}
-			return $wpdb->query($wpdb->prepare($cache_sql,serialize($vcard),$metaverse,$id));
+			return $wpdb->query($wpdb->prepare($cache_sql,serialize($vcard),$user_ID,$metaverse,$id));
 		}
 		else
 		{
 			return false;
 		}
 	}
-	public static function get_all_mv_ids($force=false)
-	{
-		global $wpdb;
-		static $get_sql;
-		static $mv_ids;
-		if(isset($get_sql) === false)
-		{
-			$get_sql = 'SELECT metaverse,id FROM ' . self::db_tablename();
-		}
-		if(isset($mv_ids) === false || $force === true)
-		{
-			$mv_ids = $wpdb->get_results($get_sql);
-		}
-		return $mv_ids;
-	}
 	public static function get_all_mv_ids_and_cache($force=false)
 	{
 		global $wpdb;
+		global $user_ID;
+		get_currentuserinfo();
 		static $get_sql;
-		static $mv_ids;
+		static $user_sql = ' WHERE user_id = %s';
+		static $mv_ids = array();
 		if(isset($get_sql) === false)
 		{
 			$get_sql = 'SELECT metaverse,id,cache FROM ' . self::db_tablename();
 		}
-		if(isset($mv_ids) === false || $force == true)
+		if(isset($mv_ids[$user_ID]) === false || $force == true)
 		{
-			$mv_ids = $wpdb->get_results($get_sql);
-			foreach($mv_ids as $k=>$v)
+			if($user_ID === '')
+			{
+				$mv_ids[$user_ID] = $wpdb->get_results($get_sql);
+			}
+			else
+			{
+				$mv_ids[$user_ID] = $wpdb->get_results($wpdb->prepare($get_sql . $user_sql,$user_ID));
+			}
+			foreach($mv_ids[$user_ID] as $k=>$v)
 			{
 				if(empty($v->cache) === false)
 				{
-					$mv_ids[$k]->cache = unserialize($v->cache);
+					$mv_ids[$user_ID][$k]->cache = unserialize($v->cache);
 				}
 			}
 		}
-		return $mv_ids;
-	}
-	public static function get_cached_mv_ids($force=false)
-	{
-		global $wpdb;
-		static $mv_ids;
-		static $get_sql;
-		if(isset($get_sql) === false)
-		{
-			$get_sql = 'SELECT metaverse,id FROM ' . self::db_tablename() . ' WHERE cache IS NOT NULL';
-		}
-		if(isset($mv_ids) === false || $force === true)
-		{
-			$mv_ids = $wpdb->get_results($get_sql);
-		}
-		return $mv_ids;
+		return $mv_ids[$user_ID];
 	}
 	public static function get_uncached_mv_ids($force=false)
 	{
 		global $wpdb;
-		static $mv_ids;
+		global $user_ID;
+		get_currentuserinfo();
+		static $mv_ids = array();
 		static $get_sql;
+		static $user_sql = ' AND user_id = %s';
 		if(isset($get_sql) === false)
 		{
 			$get_sql = 'SELECT metaverse,id FROM ' . self::db_tablename() . ' WHERE cache IS NULL';
 		}
-		if(isset($mv_ids) === false || $force === true)
+		if(isset($mv_ids[$user_ID]) === false || $force === true)
 		{
-			$mv_ids = $wpdb->get_results($get_sql);
+			if($user_ID === '')
+			{
+				$mv_ids[$user_ID] = $wpdb->get_results($get_sql);
+			}
+			else
+			{
+				$mv_ids[$user_ID] = $wpdb->get_results($wpdb->prepare($get_sql . $user_sql,$user_ID));
+			}
 		}
-		return $mv_ids;
+		return $mv_ids[$user_ID];
 	}
 	protected static $metaverse_classes = array();
 	protected static $supported_mvs = array();
@@ -645,7 +673,12 @@ ON DUPLICATE KEY UPDATE
 	}
 	public static function admin_actions()
 	{
-		add_options_page('Metaverse ID','Metaverse ID',1,'mv-id','mv_id_plugin::admin');
+		global $user_level;
+		get_currentuserinfo();
+		if($user_level >= 1)
+		{
+			add_submenu_page('profile.php', 'Metaverse ID', 'Metaverse ID', 'read', 'mv-id', 'mv_id_plugin::admin');
+		}
 		add_filter('plugin_action_links', 'mv_id_plugin::plugin_actions', 10, 2);
 	}
 	public static function plugin_actions($links, $file) {
@@ -656,7 +689,7 @@ ON DUPLICATE KEY UPDATE
 		}
 		if($file === $this_plugin)
 		{
-			$settings_link = '<a href="options-general.php?page=mv-id" style="font-weight:bold;">Manage</a>';
+			$settings_link = '<a href="profile.php?page=mv-id">Manage</a>';
 			$links[] = $settings_link;
 		}
 		return $links;
