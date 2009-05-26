@@ -19,7 +19,6 @@ class mv_id_vcard_metaplace extends mv_id_vcard
 			curl_setopt_array($ch,array(
 				CURLOPT_HEADER => false,
 				CURLOPT_SSL_VERIFYPEER=>false,
-				CURLOPT_FOLLOWLOCATION => true,
 				CURLOPT_RETURNTRANSFER => true,
 			));
 			$data = curl_exec($ch);

@@ -23,7 +23,6 @@ abstract class mv_id_vcard_wow extends mv_id_vcard
 	{
 		$ch = curl_init($url);
 		curl_setopt_array($ch,array(
-			CURLOPT_FOLLOWLOCATION => true,
 			CURLOPT_RETURNTRANSFER => true,
 			CURLOPT_USERAGENT      => 'This Is Not Firefox/3.0.10',
 		));

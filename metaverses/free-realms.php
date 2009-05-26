@@ -16,15 +16,45 @@ class mv_id_vcard_freerealms extends mv_id_vcard
 	{
 		$cookie_jar = tempnam(sys_get_temp_dir(),'mv-id');
 		$ch = curl_init(sprintf(self::sprintf_scrape,$id));
-		curl_setopt_array($ch,array(
+		$curl_opts = array(
 			CURLOPT_SSL_VERIFYPEER=>false,
-			CURLOPT_FOLLOWLOCATION => true,
 			CURLOPT_RETURNTRANSFER => true,
 			CURLOPT_COOKIEFILE => $cookie_jar,
 			CURLOPT_COOKIEJAR => $cookie_jar,
-		));
+		);
+		if(ini_get('safe_mode') !== '1')
+		{
+			$curl_opts[CURLOPT_FOLLOWLOCATION] = true;
+		}
+		else
+		{
+			$curl_opts[CURLOPT_FOLLOWLOCATION] = false;
+			$curl_opts[CURLOPT_HEADER] = true;
+		}
+		curl_setopt_array($ch,$curl_opts);
 		$data = curl_exec($ch);
 		curl_close($ch);
+		if(ini_get('safe_mode') === '1')
+		{
+			$redirects = 5;
+			while($redirects>0)
+			{
+				if(($pos = strpos($data,'Location: http')) !== false)
+				{
+					$pos = strpos($data,'http',$pos);
+					$url = substr($data,$pos,strpos($data,"\r\n",$pos) - $pos);
+					$ch = curl_init($url);
+					curl_setopt_array($ch,$curl_opts);
+					$data = curl_exec($ch);
+					--$redirects;
+				}
+				else
+				{
+					$redirects = 0;
+				}
+			}
+			$data = trim(substr($data,strpos($data,"\r\n\r\n")));
+		}
 		$data = json_decode($data);
 		if(isset($data->characterList))
 		{
