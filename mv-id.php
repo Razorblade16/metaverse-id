@@ -3,7 +3,7 @@
 Plugin Name: Metaverse ID
 Plugin URI: http://blog.signpostmarv.name/mv-id/
 Description: Display your identity from around the metaverse!
-Version: 0.9
+Version: 0.9.1
 Author: SignpostMarv Martin
 Author URI: http://blog.signpostmarv.name/
  Copyright 2009 SignpostMarv Martin  (email : mv-id.wp@signpostmarv.name)
@@ -503,6 +503,24 @@ PRIMARY KEY ( `user_id`,`metaverse` , `id` )
 		self::uninstall();
 		wp_clear_scheduled_hook('mv_id_plugin__regenerate_cache');
 	}
+	public static function delete_user($user_ID)
+	{
+		global $wpdb;
+		static $delete_sql;
+		if(isset($delete_sql) === false)
+		{
+			$delete_sql = 'DELETE FROM ' . self::db_tablename() . ' WHERE user_id = %s';
+		}
+		$wpdb->query($wpdb->prepare($delete_sql,$user_ID));
+	}
+	public static function profile_update($user_ID)
+	{
+		$user_info = get_userdata($user_ID);
+		if(isset($user_info->user_level) === false)
+		{
+			self::delete_user($user_ID);
+		}
+	}
 	public static function cron()
 	{
 		global $wpdb;
@@ -888,4 +906,6 @@ register_deactivation_hook(__FILE__,'mv_id_plugin::deactivate');
 add_action('mv_id_plugin__regenerate_cache','mv_id_plugin::cron');
 add_action('admin_menu','mv_id_plugin::admin_actions');
 add_action('plugins_loaded','mv_id_plugin_widgets::register');
+add_action('delete_user','mv_id_plugin::delete_user');
+add_action('profile_update','mv_id_plugin::profile_update');
 ?>

@@ -1,9 +1,9 @@
 === Metaverse ID ===
 Contributors: signpostmarv
-Tags: mv-id, metaverse, id, hcard, vcard, identity, profile, second life, wow, world of warcraft, lotro, metaplace
+Tags: mv-id, metaverse, id, hcard, vcard, hresume, identity, profile, sl, second life, wow, world of warcraft, lotro, metaplace
 Requires at least: 2.3
 Tested up to: 2.7.1
-Stable tag: 0.9
+Stable tag: 0.9.1
 
 Display your identity from around the metaverse!
 
@@ -48,8 +48,12 @@ Supported Metaverses
 To-do
 --------------------
 * Give admin-level users ability to delete/update all IDs
-* Delete IDs when user is demoted to subscriber or deleted
 * Add multi-select box to widget options to select which IDs get displayed in the widget.
+
+0.9.1
+--------------------
+* Delete IDs when user is demoted to subscriber or deleted
+ * partially implemented, demoting a user from the batch-edit screen doesn't delete the IDs.
 
 0.9
 --------------------
@@ -59,13 +63,14 @@ To-do
 
 0.8
 --------------------
-Added [Skills](http://microformats.org/wiki/hresume#Skills) & Stats support.
+* Added [Skills](http://microformats.org/wiki/hresume#Skills) & Stats support.
 * Stats are currently only used to supply account creation dates via the [hCard bday property](http://microformats.org/wiki/hcard).
 
 0.7
 --------------------
-Switched from hListing with self-review to [hResume](http://microformats.org/wiki/hresume), adding guilds/groups as "[affiliations](http://microformats.org/wiki/hresume#Affiliations)".
+* Switched from hListing with self-review to [hResume](http://microformats.org/wiki/hresume)
+ * adding guilds/groups as "[affiliations](http://microformats.org/wiki/hresume#Affiliations)".
 
 0.6
 --------------------
-Optimised the UI by using javascript to dynamically add more fields instead of using a fixed list of fields (which would take up more and more space with every metaverse that was added).
+* Optimised the UI by using javascript to dynamically add more fields instead of using a fixed list of fields (which would take up more and more space with every metaverse that was added).
