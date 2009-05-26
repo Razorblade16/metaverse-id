@@ -3,7 +3,7 @@ Contributors: signpostmarv
 Tags: mv-id, metaverse, id, hcard, vcard, hresume, identity, profile, sl, second life, wow, world of warcraft, lotro, metaplace
 Requires at least: 2.3
 Tested up to: 2.7.1
-Stable tag: 0.9.2
+Stable tag: 0.9.3
 
 Display your identity from around the metaverse!
 
@@ -50,9 +50,9 @@ To-do
 * Give admin-level users ability to delete/update all IDs
 * Add multi-select box to widget options to select which IDs get displayed in the widget.
 
-0.9.2
+0.9.2/3
 --------------------
-* Fixed a bug with PHP safe mode interfering with CURLOPT_FOLLOWLOCATION
+* Fixed a bug with PHP safe mode/open_basedir interfering with CURLOPT_FOLLOWLOCATION
 
 0.9.1
 --------------------

@@ -22,7 +22,8 @@ class mv_id_vcard_freerealms extends mv_id_vcard
 			CURLOPT_COOKIEFILE => $cookie_jar,
 			CURLOPT_COOKIEJAR => $cookie_jar,
 		);
-		if(ini_get('safe_mode') !== '1')
+		$no_hack_needed = (ini_get('safe_mode') !== '1' && ini_get('open_basedir') === false);
+		if($no_hack_needed)
 		{
 			$curl_opts[CURLOPT_FOLLOWLOCATION] = true;
 		}
@@ -34,7 +35,7 @@ class mv_id_vcard_freerealms extends mv_id_vcard
 		curl_setopt_array($ch,$curl_opts);
 		$data = curl_exec($ch);
 		curl_close($ch);
-		if(ini_get('safe_mode') === '1')
+		if($no_hack_needed === false)
 		{
 			$redirects = 5;
 			while($redirects>0)
