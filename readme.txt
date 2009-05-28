@@ -3,7 +3,7 @@ Contributors: signpostmarv
 Tags: mv-id, metaverse, id, hcard, vcard, hresume, identity, profile, sl, second life, wow, world of warcraft, lotro, metaplace
 Requires at least: 2.3
 Tested up to: 2.7.1
-Stable tag: 0.9.3
+Stable tag: 0.9.4
 
 Display your identity from around the metaverse!
 
@@ -13,6 +13,7 @@ Display your identity from around the metaverse!
 
 Supported Metaverses
 --------------------
+* EVE Online
 * Free Realms
 * Lord of the Rings Online
 * Metaplace
@@ -22,6 +23,12 @@ Supported Metaverses
 * World of Warcraft
  * European servers
  * US Servers
+
+Metaverse Configuration
+--------------------
+Some Metaverses (such as EVE) require some extra info in order for Metaverse ID to access the data. A menu for Metaverse ID will be added to the *Settings* menu if one of the supported Metaverses requires configuration.
+
+If you try to update a Metaverse ID and you repeatedly get a message to the effect that the update failed, check to make sure that the Metaverse has been correctly configured!
 
 == Installation ==
 
@@ -40,7 +47,7 @@ Supported Metaverses
 
 * PHP5 (I'm using features not present in PHP4, WordPress runs fine on PHP5, so upgrade already!)
 * DOMDocument (required for Second Life, LOTRO)
-* SimpleXML (required for WoW, Metaplace)
+* SimpleXML (required for WoW, Metaplace, EVE)
 * JSON decode support (required for Free Realms)
 
 == Changes ==
@@ -50,9 +57,14 @@ To-do
 * Give admin-level users ability to delete/update all IDs
 * Add multi-select box to widget options to select which IDs get displayed in the widget.
 
+0.9.4
+--------------------
+* Added support for EVE Online
+* Added support for Metaverses that require API configuration in order to use.
+
 0.9.2/3
 --------------------
-* Fixed a bug with PHP safe mode/open_basedir interfering with CURLOPT_FOLLOWLOCATION
+* Fixed a bug with PHP safe mode/open\_basedir interfering with CURLOPT\_FOLLOWLOCATION
 
 0.9.1
 --------------------

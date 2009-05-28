@@ -3,7 +3,7 @@
 Plugin Name: Metaverse ID
 Plugin URI: http://blog.signpostmarv.name/mv-id/
 Description: Display your identity from around the metaverse!
-Version: 0.9.3
+Version: 0.9.4
 Author: SignpostMarv Martin
 Author URI: http://blog.signpostmarv.name/
  Copyright 2009 SignpostMarv Martin  (email : mv-id.wp@signpostmarv.name)
@@ -39,6 +39,10 @@ interface mv_id_vcard_widget
 	public function affiliations();
 	public function skills();
 	public function stats();
+}
+interface mv_id_needs_admin
+{
+	public static function admin_fields();
 }
 interface mv_id_stat_funcs
 {
@@ -139,7 +143,7 @@ class mv_id_vcard_affiliation implements mv_id_vcard_funcs
 	}
 	public function url()
 	{
-		if(isset($this->url) === false)
+		if(isset($this->url) === false && $this->url !== false)
 		{
 			$this->url = sprintf(constant(get_class($this) . '::sprintf_url'),$this->uid());
 		}
@@ -247,6 +251,41 @@ abstract class mv_id_vcard implements mv_id_vcard_funcs, mv_id_vcard_widget
 	{
 		return null;
 	}
+	protected static function get_widgets($metaverse,array $args)
+	{
+		if(mv_id_plugin::nice_name($metaverse) === false)
+		{
+			return;
+		}
+		static $get_sql;
+		if(isset($get_sql) === false)
+		{
+			$get_sql = 'SELECT cache FROM ' . mv_id_plugin::db_tablename() . ' WHERE metaverse = %s AND cache IS NOT NULL';
+		}
+		global $wpdb;
+		$vcards = $wpdb->get_results($wpdb->prepare($get_sql,$metaverse));
+		if(empty($vcards) === false)
+		{
+			extract($args);
+			echo $before_widget,$before_title,htmlentities2(mv_id_plugin::nice_name($metaverse)),$after_title,"\n";
+			$mv_id_hashes = array();
+			foreach($vcards as $k=>$vcard)
+			{
+				if(isset($vcard->cache) === false)
+				{
+					continue;
+				}
+				$vcard->cache = unserialize($vcard->cache);
+				$mv_id_hash = get_class($vcard->cache) . '::' . $vcard->cache->uid();
+				if(in_array($mv_id_hash,$mv_id_hashes) === false)
+				{
+					$mv_id_hashes[] = $mv_id_hash;
+					self::output($vcard->cache);
+				}
+			}
+			echo $after_widget,"\n";
+		}
+	}
 	public static function output(mv_id_vcard $vcard)
 	{
 ?>
@@ -319,7 +358,7 @@ abstract class mv_id_vcard implements mv_id_vcard_funcs, mv_id_vcard_widget
 						foreach($vcard->affiliations() as $affiliation)
 						{
 ?>
-							<li class="affiliation vcard"><a class="fn url org" href="<?php echo $affiliation->url(); ?>"><?php echo htmlentities($affiliation->name(),ENT_QUOTES,'UTF-8'); ?></a></li>
+							<li class="affiliation vcard"><span class="fn org"><?php if( $affiliation->url() !== false){ ?><a class="url" href="<?php echo $affiliation->url(); ?>"><?php } echo htmlentities($affiliation->name(),ENT_QUOTES,'UTF-8'); if($affiliation->url() !== false){ ?></a><?php } ?></span></li>
 <?php
 						}
 ?>
@@ -330,44 +369,11 @@ abstract class mv_id_vcard implements mv_id_vcard_funcs, mv_id_vcard_widget
 					</div>
 <?php
 	}
-	protected static function get_widgets($metaverse,array $args)
-	{
-		if(mv_id_plugin::nice_name($metaverse) === false)
-		{
-			return;
-		}
-		static $get_sql;
-		if(isset($get_sql) === false)
-		{
-			$get_sql = 'SELECT cache FROM ' . mv_id_plugin::db_tablename() . ' WHERE metaverse = %s AND cache IS NOT NULL';
-		}
-		global $wpdb;
-		$vcards = $wpdb->get_results($wpdb->prepare($get_sql,$metaverse));
-		if(empty($vcards) === false)
-		{
-			extract($args);
-			echo $before_widget,$before_title,htmlentities2(mv_id_plugin::nice_name($metaverse)),$after_title,"\n";
-			$mv_id_hashes = array();
-			foreach($vcards as $k=>$vcard)
-			{
-				if(isset($vcard->cache) === false)
-				{
-					continue;
-				}
-				$vcard->cache = unserialize($vcard->cache);
-				$mv_id_hash = get_class($vcard->cache) . '::' . $vcard->cache->uid();
-				if(in_array($mv_id_hash,$mv_id_hashes) === false)
-				{
-					$mv_id_hashes[] = $mv_id_hash;
-					self::output($vcard->cache);
-				}
-			}
-			echo $after_widget,"\n";
-		}
-	}
 }
 class mv_id_plugin
 {
+	protected static $metaverse_classes = array();
+	protected static $supported_mvs = array();
 	public static function DOMDocument($data)
 	{
 		$doc = new DOMDocument;
@@ -663,8 +669,6 @@ ON DUPLICATE KEY UPDATE
 		}
 		return $mv_ids[$user_ID];
 	}
-	protected static $metaverse_classes = array();
-	protected static $supported_mvs = array();
 	public static function register_metaverse($nice_name,$metaverse,$class)
 	{
 		self::$metaverse_classes[$metaverse] = $class;
@@ -689,13 +693,33 @@ ON DUPLICATE KEY UPDATE
 			call_user_func_array(self::$metaverse_classes[$metaverse] . '::is_id_valid',array($id)) === true
 		);
 	}
+	public static function mv_needs_admin($metaverse=null)
+	{
+		static $mvs;
+		if(isset($mvs) === false)
+		{
+			$mvs = array();
+			foreach(self::$metaverse_classes as $metaverse=>$class)
+			{
+				if(in_array('mv_id_needs_admin',class_implements($class,false)))
+				{
+					$mvs[$metaverse] = $class;
+				}
+			}
+		}
+		return isset($metaverse) ? ( isset($mvs[$metaverse]) ? $mvs[$metaverse] : false ) : $mvs;
+	}
 	public static function admin_actions()
 	{
 		global $user_level;
 		get_currentuserinfo();
 		if($user_level >= 1)
 		{
-			add_submenu_page('profile.php', 'Metaverse ID', 'Metaverse ID', 'read', 'mv-id', 'mv_id_plugin::admin');
+			add_submenu_page('profile.php', 'Metaverse ID', 'Metaverse ID', 'read', 'mv-id', 'mv_id_plugin::user_ids');
+		}
+		if(self::mv_needs_admin() !== array())
+		{
+			add_options_page('Metaverse ID','Metaverse ID',1,'mv-id','mv_id_plugin::admin');
 		}
 		add_filter('plugin_action_links', 'mv_id_plugin::plugin_actions', 10, 2);
 	}
@@ -712,7 +736,7 @@ ON DUPLICATE KEY UPDATE
 		}
 		return $links;
 	}
-	public static function admin()
+	public static function user_ids()
 	{
 		if(isset($_POST['delete']))
 		{
@@ -720,6 +744,15 @@ ON DUPLICATE KEY UPDATE
 			{
 				list($metaverse,$id) = explode('::',$delete_this);
 				self::delete($metaverse,$id);
+				unset($_POST['delete'][$delete_this]);
+				if(isset($_POST['add'],$_POST['add'][$metaverse],$_POST['add'][$metaverse][$id]))
+				{
+					unset($_POST['add'][$metaverse][$id]);
+				}
+				if(($pos = array_search($delete_this,$_POST['update'])) !== false)
+				{
+					unset($_POST['update'][$pos]);
+				}
 			}
 		}
 		if(isset($_POST['add']))
@@ -743,7 +776,7 @@ ON DUPLICATE KEY UPDATE
 		}
 		$mv_ids = self::get_all_mv_ids_and_cache();
 ?>
-	<h2>Metaverse ID Admin</h2>
+	<h2>Your Metaverse IDs</h2>
 	<form action="<?php echo str_replace( '%7E', '~', $_SERVER['REQUEST_URI']); ?>" method="post">
 <?php
 		if(count($mv_ids) > 0)
@@ -856,6 +889,88 @@ mv_id_plugin__id_div.appendChild(a);
 	</form>
 <?php
 	}
+	public static function admin()
+	{
+		if(isset($_POST) && empty($_POST) === false)
+		{
+			$needs_admin = self::mv_needs_admin();
+			foreach(array_keys($_POST) as $metaverse)
+			{
+				if(isset($needs_admin[$metaverse]) === false)
+				{
+					unset($_POST[$metaverse]);
+				}
+				else
+				{
+					$admin_fields = call_user_func($needs_admin[$metaverse] . '::admin_fields');
+					foreach($_POST[$metaverse] as $field=>$value)
+					{
+						if(in_array($field,array_keys($admin_fields)) === false)
+						{
+							unset($_POST[$metaverse][$field]);
+						}
+						else
+						{
+							if(preg_match($admin_fields[$field]['regex'],$value) !== 1)
+							{
+								unset($_POST[$metaverse]);
+							}
+						}
+					}
+				}
+			}
+			if(empty($_POST))
+			{
+				unset($_POST);
+			}
+			else
+			{
+				foreach($_POST as $metaverse=>$config)
+				{
+					$option_label = 'mv-id::' . $metaverse;
+					$value = serialize($config);
+					if(get_option($option_label))
+					{
+						update_option($option_label,$value);
+					}
+					else
+					{
+						add_option($option_label,$value,'','no');
+					}
+				}
+			}
+		}
+?>
+	<h2>Metaverse ID Admin</h2>
+	<form action="<?php echo str_replace( '%7E', '~', $_SERVER['REQUEST_URI']); ?>" method="post">
+<?php
+		foreach(self::mv_needs_admin() as $metaverse=>$class)
+		{
+			$fields = call_user_func($class . '::admin_fields');
+			$option = get_option('mv-id::' . $metaverse);
+			if($option)
+			{
+				$option = unserialize($option);
+			}
+?>
+		<fieldset>
+			<legend><?php echo htmlentities2(self::nice_name($metaverse));?></legend>
+			<ol>
+<?php
+			foreach($fields as $id=>$field)
+			{
+?>				<li><label for="<?php echo str_replace(' ','_',$metaverse),'-',$id; ?>"><?php echo htmlentities2($field['name']);?></label> <input id="<?php echo str_replace(' ','_',$metaverse),'-',$id; ?>" name="<?php echo $metaverse,'[',$id; ?>]" <?php if($option){ echo 'value="',$option[$id],'"';} ?> /></li>
+<?php
+			}
+?>
+			</ol>
+			<input type="submit" value="Configure" />
+		</fieldset>
+<?php
+		}
+?>
+	</form>
+<?php }
 }
 class mv_id_plugin_widgets
 {
@@ -901,6 +1016,7 @@ require_once('metaverses/free-realms.php');
 require_once('metaverses/wow.php');
 require_once('metaverses/metaplace.php');
 require_once('metaverses/lotro.php');
+require_once('metaverses/eve.php');
 register_activation_hook(__FILE__,'mv_id_plugin::activate');
 register_deactivation_hook(__FILE__,'mv_id_plugin::deactivate');
 add_action('mv_id_plugin__regenerate_cache','mv_id_plugin::cron');
