@@ -3,7 +3,7 @@
 Plugin Name: Metaverse ID
 Plugin URI: http://blog.signpostmarv.name/mv-id/
 Description: Display your identity from around the metaverse!
-Version: 0.9.4
+Version: 0.9.5
 Author: SignpostMarv Martin
 Author URI: http://blog.signpostmarv.name/
  Copyright 2009 SignpostMarv Martin  (email : mv-id.wp@signpostmarv.name)
@@ -291,7 +291,7 @@ abstract class mv_id_vcard implements mv_id_vcard_funcs, mv_id_vcard_widget
 ?>
 					<div class="hresume">
 						<address class="contact vcard">
-							<a class="url fn summary" rel="me" href="<?php echo $vcard->url(); ?>"><?php echo htmlentities2($vcard->name()); ?></a><br />
+							<a class="url fn" rel="me" href="<?php echo $vcard->url(); ?>"><?php echo htmlentities2($vcard->name()); ?></a><br />
 							<span class="uid" style="display:none;"><?php echo $vcard->uid(); ?></span>
 <?php
 					if($vcard->img() !== null)
@@ -300,15 +300,15 @@ abstract class mv_id_vcard implements mv_id_vcard_funcs, mv_id_vcard_widget
 							<img class="photo" src="<?php echo $vcard->image_url(); ?>" alt="<?php echo htmlentities2($vcard->name()); ?>"  />
 <?php			
 					}
-					if(isset($vcard->stats()->bday))
-					{
-?>
-							<abbr class="bday" title="<?php echo $vcard->stats()->bday; ?>"><?php echo htmlentities2(mv_id_plugin::bday_label($vcard)),': ',date('jS M, Y',strtotime($vcard->stats()->bday)); ?></abbr>
-<?php
-					}
 ?>
 						</address>
 <?php
+					if(isset($vcard->stats()->bday))
+					{
+?>
+						<div class="vevent account-creation"><span class="summary"><span style="display: none;"><?php echo htmlentities2($vcard->name()); ?>'s<?php if(mv_id_plugin::bday_label($vcard) === 'Created'){ echo ' account'; } ?> </span><?php echo htmlentities2(mv_id_plugin::bday_label($vcard)); ?></span>: <abbr class="dtstart" title="<?php echo $vcard->stats()->bday; ?>"><?php echo date('jS M, Y',strtotime($vcard->stats()->bday)); ?></abbr></div>
+<?php
+					}
 					if($vcard->description() !== null)
 					{
 ?>

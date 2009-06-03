@@ -1,9 +1,9 @@
 === Metaverse ID ===
 Contributors: signpostmarv
-Tags: mv-id, metaverse, id, hcard, vcard, hresume, identity, profile, sl, second life, wow, world of warcraft, lotro, metaplace
+Tags: mv-id, MV-ID, Metaverse, ID, hCard, vCard, hResume, hCalendar, vEvent, iCal, identity, profile, SL, Second Life, WoW, World of Warcraft, LotRO, Metaplace, EVE, EVE Online
 Requires at least: 2.3
 Tested up to: 2.7.1
-Stable tag: 0.9.4
+Stable tag: 0.9.5
 
 Display your identity from around the metaverse!
 
@@ -54,8 +54,16 @@ If you try to update a Metaverse ID and you repeatedly get a message to the effe
 
 To-do
 --------------------
-* Give admin-level users ability to delete/update all IDs
+* Give admin-level users ability to delete/update all IDs.
 * Add multi-select box to widget options to select which IDs get displayed in the widget.
+* Add option to auto-detect links in profile text and apply appropriate XFN values.
+* Add generic hCard/hResume parser
+
+0.9.5
+--------------------
+* Cleaned up class name left over from using hListing
+* Changed semantics of character creation dates after discussion with Tantek Çelik
+ * We agreed that using the bday property wasn't quite right, so I suggested using an hCalendar event block
 
 0.9.4
 --------------------
