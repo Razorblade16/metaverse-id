@@ -40,16 +40,16 @@ abstract class mv_id_vcard_wow extends mv_id_vcard
 			{
 				foreach($xpath[0]->attributes() as $attribute => $value)
 				{
-					$$attribute = $value;
+					$$attribute = (string)$value;
 				}
 				$skills = array();
 				$skills[] = new mv_id_skill('Achievement Points',(int)$points,'http://www.wowwiki.com/Achievement');
-				$description = '"' . (string)$prefix . (string)$name . (string)$suffix . '" is a level ' . (string)$level . ' ' . strtolower((string)$gender) . ' ' . (string)$race . ' ' . (string)$class . ', and can be found on the ' . (string)$realm . ' realm.';
+				$description = '"' . $prefix . $name . $suffix . '" is a level ' . $level . ' ' . strtolower($gender) . ' ' . $race . ' ' . $class . ', and can be found on the ' . $realm . ' realm.';
 				$url = str_replace('&n=','&amp;n=',$url);
 				$guild = null;
 				if(isset($guildName) && empty($guildName) === false)
 				{
-					$guild = new mv_id_vcard_affiliation((string)$guildName,substr($url,0,strpos($url,'/character-sheet.xml')) . '/guild-info.xml?r=' . (string)$realm . '&amp;gn=' . urlencode((string)$guildName));
+					$guild = new mv_id_vcard_affiliation($guildName,substr($url,0,strpos($url,'/character-sheet.xml')) . '/guild-info.xml?r=' . $realm . '&amp;gn=' . urlencode($guildName));
 				}
 				$xpath = mv_id_plugin::XPath($XML,'//professions/skill');
 				if(empty($xpath) === false)
@@ -59,12 +59,12 @@ abstract class mv_id_vcard_wow extends mv_id_vcard
 						foreach($skill->attributes() as $attribute => $value)
 						{
 							$attribute = '_' . $attribute;
-							$$attribute = $value;
+							$$attribute = (string)$value;
 						}
-						$skills[] = new mv_id_skill((string)$_name,(int)$_value,sprintf('http://www.wowwiki.com/%s',(string)$_name));
+						$skills[] = new mv_id_skill($_name,(int)$_value,sprintf('http://www.wowwiki.com/%s',$_name));
 					}
 				}
-				return array((string)$name,(string)$description,(string)$genderId,(string)$raceId,(string)$classId,(string)$level,$url,null,$guild,$skills);
+				return array($name,$description,$genderId,$raceId,$classId,$level,$url,null,$guild,$skills);
 			}
 			else
 			{

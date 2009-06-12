@@ -2,8 +2,8 @@
 Contributors: signpostmarv
 Tags: mv-id, MV-ID, Metaverse, ID, hCard, vCard, hResume, hCalendar, vEvent, iCal, identity, profile, SL, Second Life, WoW, World of Warcraft, LotRO, Metaplace, EVE, EVE Online
 Requires at least: 2.3
-Tested up to: 2.7.1
-Stable tag: 0.9.5
+Tested up to: 2.8
+Stable tag: 0.9.6
 
 Display your identity from around the metaverse!
 
