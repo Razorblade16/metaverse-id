@@ -1,9 +1,39 @@
 <?php
+/*
+Plugin Name: MV ID::Free Realms
+Plugin URI: http://blog.signpostmarv.name/mv-id/
+Description: Display your Free Realms Identity. Requires <a href="http://blog.signpostmarv.name/mv-id/">Metaverse ID</a>.
+Version: 1.0
+Author: SignpostMarv Martin
+Author URI: http://blog.signpostmarv.name/
+ Copyright 2009 SignpostMarv Martin  (email : mv-id.wp@signpostmarv.name)
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/
+if(class_exists('mv_id_vcard') === false)
+{
+	return;
+}
 class mv_id_vcard_freerealms extends mv_id_vcard
 {
 	const sprintf_url = 'http://www.freerealms.com/character/profile.action#character/%1$s';
-	const sprintf_img = 'http://www.freerealms.com/uploads/%1$s';
+	const sprintf_img = 'http://www.freerealms.com/%1$s';
 	const sprintf_scrape = 'http://www.freerealms.com/character/profile!json.action?characterId=%1$s';
+	public static function register_metaverse()
+	{
+		mv_id_plugin::register_metaverse('Free Realms','freerealms','mv_id_vcard_freerealms');
+	}
 	public static function is_id_valid($id)
 	{
 		return is_integer($id) ? true : ctype_digit($id);
@@ -15,50 +45,16 @@ class mv_id_vcard_freerealms extends mv_id_vcard
 	public static function factory($id)
 	{
 		$cookie_jar = tempnam(sys_get_temp_dir(),'mv-id');
-		$ch = curl_init(sprintf(self::sprintf_scrape,$id));
-		$curl_opts = array(
-			CURLOPT_SSL_VERIFYPEER=>false,
-			CURLOPT_RETURNTRANSFER => true,
-			CURLOPT_COOKIEFILE => $cookie_jar,
-			CURLOPT_COOKIEJAR => $cookie_jar,
-		);
-		$no_hack_needed = (ini_get('safe_mode') !== '1' && ini_get('open_basedir') === false);
-		if($no_hack_needed)
-		{
-			$curl_opts[CURLOPT_FOLLOWLOCATION] = true;
-		}
-		else
-		{
-			$curl_opts[CURLOPT_FOLLOWLOCATION] = false;
-			$curl_opts[CURLOPT_HEADER] = true;
-		}
-		curl_setopt_array($ch,$curl_opts);
-		$data = curl_exec($ch);
-		curl_close($ch);
-		if($no_hack_needed === false)
-		{
-			$redirects = 5;
-			while($redirects>0)
-			{
-				if(($pos = strpos($data,'Location: http')) !== false)
-				{
-					$pos = strpos($data,'http',$pos);
-					$url = substr($data,$pos,strpos($data,"\r\n",$pos) - $pos);
-					$ch = curl_init($url);
-					curl_setopt_array($ch,$curl_opts);
-					$data = curl_exec($ch);
-					--$redirects;
-				}
-				else
-				{
-					$redirects = 0;
-				}
-			}
-			$data = trim(substr($data,strpos($data,"\r\n\r\n")));
-		}
-		$data = json_decode($data);
+		$data = json_decode(mv_id_plugin::curl(
+			sprintf(self::sprintf_scrape,$id),
+			array(
+				CURLOPT_COOKIEFILE => $cookie_jar,
+				CURLOPT_COOKIEJAR => $cookie_jar,
+			)
+		));
 		if(isset($data->characterList))
 		{
+			$uid = $namne = $img = $description = null;
 			foreach($data->characterList as $character)
 			{
 				$uid = $character->charId;
@@ -74,10 +70,10 @@ class mv_id_vcard_freerealms extends mv_id_vcard
 			return null;
 		}
 	}
-	public static function widget(array $args)
+	public static function get_widget(array $args)
 	{
 		self::get_widgets('freerealms',$args);
 	}
 }
-mv_id_plugin::register_metaverse('Free Realms','freerealms','mv_id_vcard_freerealms');
+add_action('mv_id_plugin__register_metaverses','mv_id_vcard_freerealms::register_metaverse');
 ?>

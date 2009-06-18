@@ -1,9 +1,9 @@
 === Metaverse ID ===
 Contributors: signpostmarv
-Tags: mv-id, MV-ID, Metaverse, ID, hCard, vCard, hResume, hCalendar, vEvent, iCal, identity, profile, SL, Second Life, WoW, World of Warcraft, LotRO, Metaplace, EVE, EVE Online
-Requires at least: 2.3
+Tags: mv-id, MV-ID, Metaverse, ID, hCard, vCard, hResume, hCalendar, vEvent, iCal, identity, profile, SL, Second Life, WoW, World of Warcraft, LotRO, Metaplace, EVE, EVE Online, Progress Quest
+Requires at least: 2.8
 Tested up to: 2.8
-Stable tag: 0.9.6
+Stable tag: 0.10.0
 
 Display your identity from around the metaverse!
 
@@ -17,6 +17,7 @@ Supported Metaverses
 * Free Realms
 * Lord of the Rings Online
 * Metaplace
+* Progress Quest
 * Second Life
  * Agni/Main Grid
  * Teen Second Life
@@ -41,7 +42,7 @@ If you try to update a Metaverse ID and you repeatedly get a message to the effe
 2. Adding multiple profiles in one go.
 3. Profiles haven't been cached yet! Better force an update to get the profiles cached.
 4. Freshly cached profiles. Ticking the box in the `Update` column can be used to force an update of the profile cache.
-5. Individual widgets for each Metaverse!
+5. Individual widgets for each ID!
 
 == Requirements ==
 
@@ -55,9 +56,16 @@ If you try to update a Metaverse ID and you repeatedly get a message to the effe
 To-do
 --------------------
 * Give admin-level users ability to delete/update all IDs.
-* Add multi-select box to widget options to select which IDs get displayed in the widget.
 * Add option to auto-detect links in profile text and apply appropriate XFN values.
 * Add generic hCard/hResume parser
+
+0.10.0
+--------------------
+* Added select boxes to widget options, allowing one widget per ID.
+* Fixed some minor bugs
+* Converted Denis de Bernardy & Semilogic's "Autolink URI" plugin to a filter in order to implement a feature suggested by Will Norris
+* Converted some logic to WP's Actions & Filters, added a filter for plugins to modify widget output (post_output_mv_id_vcard)
+* Converted widgets to use WP 2.8's Widget facilities
 
 0.9.5
 --------------------

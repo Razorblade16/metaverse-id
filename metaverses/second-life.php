@@ -1,4 +1,30 @@
 <?php
+/*
+Plugin Name: MV ID::Second Life
+Plugin URI: http://blog.signpostmarv.name/mv-id/
+Description: Display your Second Life Identity. Requires <a href="http://blog.signpostmarv.name/mv-id/">Metaverse ID</a>.
+Version: 1.0
+Author: SignpostMarv Martin
+Author URI: http://blog.signpostmarv.name/
+ Copyright 2009 SignpostMarv Martin  (email : mv-id.wp@signpostmarv.name)
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/
+if(class_exists('mv_id_vcard') === false)
+{
+	return;
+}
 class mv_id_vcard_agni_sl extends mv_id_vcard
 {
 	const regex_sl_id = '/^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/S';
@@ -14,6 +40,10 @@ class mv_id_vcard_agni_sl extends mv_id_vcard
 	const string_no_avatar                  = '<img alt="profile image" src="http://world.secondlife.com/images/blank.jpg" class="parcelimg" />';
 	const regex_get_description   = '/<p\ class="desc">(.*)<\/p>/S';
 	const regex_get_rezday        = '/Born\ on\:<\/span>\ ([\d]{4}\-[\d]{2}\-[\d]{2})/S';
+	public static function register_metaverse()
+	{
+		mv_id_plugin::register_metaverse('Second Life','agni SL','mv_id_vcard_agni_sl');
+	}
 	public static function is_id_valid($id)
 	{
 		return (bool)preg_match(self::regex_sl_id,$id);
@@ -119,7 +149,7 @@ class mv_id_vcard_agni_sl extends mv_id_vcard
 			return $data;
 		}
 	}
-	public static function widget(array $args)
+	public static function get_widget(array $args)
 	{
 		self::get_widgets('agni SL',$args);
 	}
@@ -128,6 +158,10 @@ class mv_id_vcard_teen_sl extends mv_id_vcard_agni_sl
 {
 	const sprintf_url = 'http://teen.world.secondlife.com/resident/%1$s';
 	const sprintf_scrape = 'http://teen.world.secondlife.com/resident/%1$s';
+	public static function register_metaverse()
+	{
+		mv_id_plugin::register_metaverse('Teen SL','teen SL','mv_id_vcard_teen_sl');
+	}
 	public static function factory($id)
 	{
 		$data = self::scrape(sprintf(self::sprintf_scrape,$id));
@@ -141,11 +175,11 @@ class mv_id_vcard_teen_sl extends mv_id_vcard_agni_sl
 			return $data;
 		}
 	}
-	public static function widget(array $args)
+	public static function get_widget(array $args)
 	{
 		self::get_widgets('teen SL',$args);
 	}
 }
-mv_id_plugin::register_metaverse('Second Life','agni SL','mv_id_vcard_agni_sl');
-mv_id_plugin::register_metaverse('Teen SL','teen SL','mv_id_vcard_teen_sl');
+add_action('mv_id_plugin__register_metaverses','mv_id_vcard_agni_sl::register_metaverse');
+add_action('mv_id_plugin__register_metaverses','mv_id_vcard_teen_sl::register_metaverse');
 ?>

@@ -1,10 +1,40 @@
 <?php
+/*
+Plugin Name: MV ID::Lord of the Rings Online
+Plugin URI: http://blog.signpostmarv.name/mv-id/
+Description: Display your LOTRO Identity. Requires <a href="http://blog.signpostmarv.name/mv-id/">Metaverse ID</a>.
+Version: 1.0
+Author: SignpostMarv Martin
+Author URI: http://blog.signpostmarv.name/
+ Copyright 2009 SignpostMarv Martin  (email : mv-id.wp@signpostmarv.name)
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/
+if(class_exists('mv_id_vcard') === false)
+{
+	return;
+}
 class mv_id_vcard_lotro extends mv_id_vcard
 {
 	const sprintf_url = '#';
 	const sprintf_img = '%s';
 	const sprintf_description = '\'%1$s of %2$s\' is a level %3$u %6$s %4$s who hails from %5$s.';
 	const sprintf_kinship_url = 'http://my.lotro.com/kinship-%s-%s/';
+	public static function register_metaverse()
+	{
+		mv_id_plugin::register_metaverse('Lord of the Rings Online','lotro','mv_id_vcard_lotro');
+	}
 	public static function id_format()
 	{
 		return '\'Username of Realm\', e.g. \'Foo of Bar\'';
@@ -129,10 +159,10 @@ class mv_id_vcard_lotro extends mv_id_vcard
 			}
 		}
 	}
-	public static function widget(array $args)
+	public static function get_widget(array $args)
 	{
 		self::get_widgets('lotro',$args);
 	}
 }
-mv_id_plugin::register_metaverse('Lord of the Rings Online','lotro','mv_id_vcard_lotro');
+add_action('mv_id_plugin__register_metaverses','mv_id_vcard_lotro::register_metaverse');
 ?>

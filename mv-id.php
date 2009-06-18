@@ -3,7 +3,7 @@
 Plugin Name: Metaverse ID
 Plugin URI: http://blog.signpostmarv.name/mv-id/
 Description: Display your identity from around the metaverse!
-Version: 0.9.6
+Version: 0.10.0
 Author: SignpostMarv Martin
 Author URI: http://blog.signpostmarv.name/
  Copyright 2009 SignpostMarv Martin  (email : mv-id.wp@signpostmarv.name)
@@ -21,355 +21,8 @@ Author URI: http://blog.signpostmarv.name/
     along with this program; if not, write to the Free Software
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-interface mv_id_vcard_funcs
-{
-	public function uid();
-	public function name();
-	public function image_url();
-	public function description();
-	public function url();
-	public static function is_id_valid($id);
-}
-interface mv_id_vcard_widget
-{
-	public static function factory($id);
-	public static function widget(array $args);
-	public static function affiliations_label();
-	public static function id_format();
-	public function affiliations();
-	public function skills();
-	public function stats();
-}
-interface mv_id_needs_admin
-{
-	public static function admin_fields();
-}
-interface mv_id_stat_funcs
-{
-	public function name();
-	public function value();
-}
-class mv_id_stat implements mv_id_stat_funcs
-{
-	protected $name;
-	protected $value;
-	public function __construct($name,$value)
-	{
-		$this->name = $name;
-		$this->value = $value;
-	}
-	public function name()
-	{
-		return $this->name;
-	}
-	public function value()
-	{
-		return $this->value;
-	}
-}
-class mv_id_stats
-{
-	protected $stats;
-	public function __construct(array $stats)
-	{
-		if(empty($stats) === false)
-		{
-			$this->stats = array();
-			foreach($stats as $stat)
-			{
-				if($stat instanceof mv_id_stat_funcs)
-				{
-					$this->stats[$stat->name()] = $stat;
-				}
-			}
-		}
-	}
-	public function stats()
-	{
-		return $this->stats;
-	}
-	public function __isset($name)
-	{
-		return isset($this->stats[$name]);
-	}
-	public function __get($name)
-	{
-		return $this->__isset($name) ? $this->stats[$name]->value() : null;
-	}
-}
-interface mv_id_skill_funcs extends mv_id_stat_funcs
-{
-	public function url();
-}
-class mv_id_skill extends mv_id_stat implements mv_id_skill_funcs
-{
-	protected $url;
-	public function __construct($name,$value,$url=null)
-	{
-		$this->name = $name;
-		$this->value = $value;
-		$this->url = $url;
-	}
-	public function url()
-	{
-		return $this->url;
-	}
-}
-class mv_id_vcard_affiliation implements mv_id_vcard_funcs
-{
-	public function __construct($name,$url=null,$image=null,$description=null,$uid=null)
-	{
-		$this->uid = $uid;
-		$this->name = $name;
-		$this->image = $image;
-		$this->description = $description;
-		$this->url = $url;
-	}
-	public function uid()
-	{
-		return $this->uid;
-	}
-	public function name()
-	{
-		return $this->name;
-	}
-	public function img()
-	{
-		return $this->image;
-	}
-	public function description()
-	{
-		return $this->description;
-	}
-	public function url()
-	{
-		if(isset($this->url) === false && $this->url !== false)
-		{
-			$this->url = sprintf(constant(get_class($this) . '::sprintf_url'),$this->uid());
-		}
-		return $this->url;
-	}
-	public function image_url()
-	{
-		return sprintf(constant(get_class($this) . '::sprintf_img'),$this->img());
-	}
-	public static function is_id_valid($id)
-	{
-		return $id === null;
-	}
-}
-abstract class mv_id_vcard implements mv_id_vcard_funcs, mv_id_vcard_widget
-{
-	protected $uid;
-	protected $name;
-	protected $image;
-	protected $description;
-	protected $affiliations;
-	protected $skills;
-	protected $stats;
-	public function __construct($uid,$name,$image=null,$description=null,$url=null,mv_id_stats $stats=null,array $affiliations=null,array $skills=null)
-	{
-		$this->uid = $uid;
-		$this->name = $name;
-		$this->image = $image;
-		$this->description = $description;
-		$this->url = $url;
-		if(empty($affiliations) === false)
-		{
-			foreach($affiliations as $k=>$affiliation)
-			{
-				if(($affiliation instanceof mv_id_vcard_affiliation) === false)
-				{
-					unset($affiliations[$k]);
-				}
-			}
-			if(empty($affiliations) === false)
-			{
-				$this->affiliations = $affiliations;
-			}
-		}
-		if(empty($skills) === false)
-		{
-			foreach($skills as $k=>$skill)
-			{
-				if(($skill instanceof mv_id_skill_funcs) === false)
-				{
-					unset($skills[$k]);
-				}
-			}
-			if(empty($skills) === false)
-			{
-				$this->skills = $skills;
-			}
-		}
-		if($stats instanceof mv_id_stats)
-		{
-			$this->stats = $stats;
-		}
-	}
-	public function uid()
-	{
-		return $this->uid;
-	}
-	public function name()
-	{
-		return $this->name;
-	}
-	public function img()
-	{
-		return $this->image;
-	}
-	public function description()
-	{
-		return $this->description;
-	}
-	public function affiliations()
-	{
-		return $this->affiliations;
-	}
-	public function skills()
-	{
-		return $this->skills;
-	}
-	public function stats()
-	{
-		return $this->stats;
-	}
-	public function url()
-	{
-		if(isset($this->url) === false)
-		{
-			$this->url = sprintf(constant(get_class($this) . '::sprintf_url'),$this->uid());
-		}
-		return $this->url;
-	}
-	public function image_url()
-	{
-		return sprintf(constant(get_class($this) . '::sprintf_img'),$this->img());
-	}
-	public static function affiliations_label()
-	{
-		return null;
-	}
-	protected static function get_widgets($metaverse,array $args)
-	{
-		if(mv_id_plugin::nice_name($metaverse) === false)
-		{
-			return;
-		}
-		static $get_sql;
-		if(isset($get_sql) === false)
-		{
-			$get_sql = 'SELECT cache FROM ' . mv_id_plugin::db_tablename() . ' WHERE metaverse = %s AND cache IS NOT NULL';
-		}
-		global $wpdb;
-		$vcards = $wpdb->get_results($wpdb->prepare($get_sql,$metaverse));
-		if(empty($vcards) === false)
-		{
-			extract($args);
-			echo $before_widget,$before_title,htmlentities2(mv_id_plugin::nice_name($metaverse)),$after_title,"\n";
-			$mv_id_hashes = array();
-			foreach($vcards as $k=>$vcard)
-			{
-				if(isset($vcard->cache) === false)
-				{
-					continue;
-				}
-				$vcard->cache = unserialize($vcard->cache);
-				$mv_id_hash = get_class($vcard->cache) . '::' . $vcard->cache->uid();
-				if(in_array($mv_id_hash,$mv_id_hashes) === false)
-				{
-					$mv_id_hashes[] = $mv_id_hash;
-					self::output($vcard->cache);
-				}
-			}
-			echo $after_widget,"\n";
-		}
-	}
-	public static function output(mv_id_vcard $vcard)
-	{
-?>
-					<div class="hresume">
-						<address class="contact vcard">
-							<a class="url fn" rel="me" href="<?php echo $vcard->url(); ?>"><?php echo htmlentities2($vcard->name()); ?></a><br />
-							<span class="uid" style="display:none;"><?php echo $vcard->uid(); ?></span>
-<?php
-					if($vcard->img() !== null)
-					{
-?>
-							<img class="photo" src="<?php echo $vcard->image_url(); ?>" alt="<?php echo htmlentities2($vcard->name()); ?>"  />
-<?php			
-					}
-?>
-						</address>
-<?php
-					if(isset($vcard->stats()->bday))
-					{
-?>
-						<div class="vevent account-creation"><span class="summary"><span style="display: none;"><?php echo htmlentities2($vcard->name()); ?>'s<?php if(mv_id_plugin::bday_label($vcard) === 'Created'){ echo ' account'; } ?> </span><?php echo htmlentities2(mv_id_plugin::bday_label($vcard)); ?></span>: <abbr class="dtstart" title="<?php echo $vcard->stats()->bday; ?>"><?php echo date('jS M, Y',strtotime($vcard->stats()->bday)); ?></abbr></div>
-<?php
-					}
-					if($vcard->description() !== null)
-					{
-?>
-						<p class="summary"><?php echo str_replace("\n","<br />\n",htmlentities2($vcard->description())); ?></p>
-<?php			
-					}
-					if(is_array($vcard->skills()))
-					{
-?>
-						<ul>
-<?php
-						foreach($vcard->skills as $skill)
-						{
-?>
-							<li><?php
-							if(is_string($skill->url()))
-							{
-								?><a class="skill" rel="tag" href="<?php echo $skill->url(); ?>"><?php 
-							}
-							else
-							{
-								?><span class="skill"><?php
-							}
-							echo htmlentities2($skill->name());
-							if(is_string($skill->url()))
-							{
-								?></a> <?php 
-							}
-							else
-							{
-								?></span> <?php
-							}
-							echo htmlentities2($skill->value()); ?></li>
-
-<?php
-						}
-?>
-						</ul>
-<?php
-					}
-					if(is_string(call_user_func(get_class($vcard) . '::affiliations_label')) && is_array($vcard->affiliations()))
-					{
-?>
-						<strong><?php echo htmlentities2(call_user_func(get_class($vcard) . '::affiliations_label')); ?></strong>
-						<ul>
-<?php
-						foreach($vcard->affiliations() as $affiliation)
-						{
-?>
-							<li class="affiliation vcard"><span class="fn org"><?php if( $affiliation->url() !== false){ ?><a class="url" href="<?php echo $affiliation->url(); ?>"><?php } echo htmlentities($affiliation->name(),ENT_QUOTES,'UTF-8'); if($affiliation->url() !== false){ ?></a><?php } ?></span></li>
-<?php
-						}
-?>
-						</ul>
-<?php
-					}
-?>
-					</div>
-<?php
-	}
-}
+require_once('abstracts.php');
+require_once('linkify.php');
 class mv_id_plugin
 {
 	protected static $metaverse_classes = array();
@@ -441,6 +94,57 @@ class mv_id_plugin
 			return false;
 		}
 	}
+	public static function curl($url,array $curl_opts=null)
+	{
+		$ch = curl_init($url);
+		if(empty($curl_opts))
+		{
+			$curl_opts = array();
+		}
+		if(isset($curl_opts[CURLOPT_SSL_VERIFYPEER]) === false)
+		{
+			$curl_opts[CURLOPT_SSL_VERIFYPEER] = false;
+		}
+		if(isset($curl_opts[CURLOPT_RETURNTRANSFER]) === false)
+		{
+			$curl_opts[CURLOPT_RETURNTRANSFER] = true;
+		}
+		$no_hack_needed = (ini_get('safe_mode') !== '1' && ini_get('open_basedir') === false);
+		if($no_hack_needed)
+		{
+			$curl_opts[CURLOPT_FOLLOWLOCATION] = true;
+		}
+		else
+		{
+			$curl_opts[CURLOPT_FOLLOWLOCATION] = false;
+			$curl_opts[CURLOPT_HEADER] = true;
+		}
+		curl_setopt_array($ch,$curl_opts);
+		$data = curl_exec($ch);
+		curl_close($ch);
+		if($no_hack_needed === false)
+		{
+			$redirects = 5;
+			while($redirects>0)
+			{
+				if(($pos = strpos($data,'Location: http')) !== false)
+				{
+					$pos = strpos($data,'http',$pos);
+					$url = substr($data,$pos,strpos($data,"\r\n",$pos) - $pos);
+					$ch = curl_init($url);
+					curl_setopt_array($ch,$curl_opts);
+					$data = curl_exec($ch);
+					--$redirects;
+				}
+				else
+				{
+					$redirects = 0;
+				}
+			}
+			$data = trim(substr($data,strpos($data,"\r\n\r\n")));
+		}
+		return $data;
+	}
 	public static function bday_label(mv_id_vcard_widget $vcard)
 	{
 		switch(get_class($vcard))
@@ -509,6 +213,11 @@ PRIMARY KEY ( `user_id`,`metaverse` , `id` )
 		self::uninstall();
 		wp_clear_scheduled_hook('mv_id_plugin__regenerate_cache');
 	}
+	public static function register_metaverses()
+	{
+		do_action('mv_id_plugin__register_metaverses');
+		mv_id_plugin::cron();
+	}
 	public static function delete_user($user_ID)
 	{
 		global $wpdb;
@@ -531,17 +240,21 @@ PRIMARY KEY ( `user_id`,`metaverse` , `id` )
 	{
 		global $wpdb;
 		$wpdb->query('UPDATE ' . self::db_tablename() . ' SET cache=NULL WHERE (NOW() - last_mod) >= 3600');
-		$uncached = self::get_uncached_mv_ids(true);
+		$uncached = self::get_uncached_mv_ids(true,true);
 		if(isset($uncached) && is_array($uncached) && count($uncached) > 0)
 		{
 			foreach($uncached as $id)
 			{
-				$vcard = call_user_func_array(self::$metaverse_classes[$id->metaverse] . '::factory',array($id->id));
-				if(isset($vcard) && is_object($vcard))
-				{
-					self::cache($id->metaverse,$id->id,$vcard);
-				}
+				self::refresh($id->metaverse,$id->id);
 			}
+		}
+	}
+	protected static function refresh($metaverse,$id)
+	{
+		$vcard = call_user_func_array(self::$metaverse_classes[$metaverse] . '::factory',array($id));
+		if(isset($vcard) && ($vcard instanceof mv_id_vcard_widget))
+		{
+			self::cache($metaverse,$id,$vcard);
 		}
 	}
 	public static function table_exists()
@@ -595,22 +308,53 @@ ON DUPLICATE KEY UPDATE
 	public static function cache($metaverse,$id,mv_id_vcard $vcard) // do not call before add
 	{
 		global $user_ID;
-		global $user_level;
-		get_currentuserinfo();
-		if(self::nice_name($metaverse) !== false && self::is_id_valid($metaverse,$id) === true && $user_ID !== '' && $user_level >= 1)
+		if(self::nice_name($metaverse) !== false && self::is_id_valid($metaverse,$id) === true)
 		{
 			global $wpdb;
 			static $cache_sql;
 			if(isset($cache_sql) === false)
 			{
-				$cache_sql = 'UPDATE ' . self::db_tablename() . ' SET cache = %s WHERE user_id = %s AND metaverse = %s AND id = %s LIMIT 1';
+				$cache_sql = 'UPDATE ' . self::db_tablename() . ' SET cache = %s WHERE metaverse = %s AND id = %s';
 			}
-			return $wpdb->query($wpdb->prepare($cache_sql,serialize($vcard),$user_ID,$metaverse,$id));
+			return $wpdb->query($wpdb->prepare($cache_sql,serialize($vcard),$metaverse,$id));
 		}
 		else
 		{
 			return false;
 		}
+	}
+	public static function get($metaverse,$id)
+	{
+		global $wpdb;
+		static $get_sql;
+		if(isset($get_sql) === false)
+		{
+			$get_sql = 'SELECT cache FROM ' . self::db_tablename() . ' WHERE metaverse=%s AND id=%s AND cache IS NOT NULL LIMIT 1';
+		}
+		$cache = $wpdb->get_var($wpdb->prepare($get_sql,$metaverse,$id));
+		if(empty($cache) === false)
+		{
+			return unserialize($cache);
+		}
+		else
+		{
+			return false;
+		}
+	}
+	public static function get_all_mv_ids($force=false)
+	{
+		global $wpdb;
+		static $get_sql;
+		static $mv_ids;
+		if(isset($get_sql) === false)
+		{
+			$get_sql = 'SELECT metaverse,id,user_id FROM ' . self::db_tablename();
+		}
+		if(empty($mv_ids) || $force == true)
+		{
+			$mv_ids = $wpdb->get_results($get_sql);
+		}
+		return $mv_ids;
 	}
 	public static function get_all_mv_ids_and_cache($force=false)
 	{
@@ -644,30 +388,35 @@ ON DUPLICATE KEY UPDATE
 		}
 		return $mv_ids[$user_ID];
 	}
-	public static function get_uncached_mv_ids($force=false)
+	public static function get_uncached_mv_ids($force=false,$all_users=false)
 	{
 		global $wpdb;
-		global $user_ID;
-		get_currentuserinfo();
 		static $mv_ids = array();
 		static $get_sql;
-		static $user_sql = ' AND user_id = %s';
+		$_zomg_user_ID = '';
+		if($all_users === false)
+		{
+			global $user_ID;
+			get_currentuserinfo();
+			$_zomg_user_ID = $user_ID;
+			static $user_sql = ' AND user_id = %s';
+		}
 		if(isset($get_sql) === false)
 		{
 			$get_sql = 'SELECT metaverse,id FROM ' . self::db_tablename() . ' WHERE cache IS NULL';
 		}
-		if(isset($mv_ids[$user_ID]) === false || $force === true)
+		if(isset($mv_ids[$_zomg_user_ID]) === false || $force === true)
 		{
-			if($user_ID === '')
+			if($_zomg_user_ID === '' || $all_users === true)
 			{
-				$mv_ids[$user_ID] = $wpdb->get_results($get_sql);
+				$mv_ids[$_zomg_user_ID] = $wpdb->get_results($get_sql);
 			}
 			else
 			{
-				$mv_ids[$user_ID] = $wpdb->get_results($wpdb->prepare($get_sql . $user_sql,$user_ID));
+				$mv_ids[$_zomg_user_ID] = $wpdb->get_results($wpdb->prepare($get_sql . $user_sql,$_zomg_user_ID));
 			}
 		}
-		return $mv_ids[$user_ID];
+		return $mv_ids[$_zomg_user_ID];
 	}
 	public static function register_metaverse($nice_name,$metaverse,$class)
 	{
@@ -736,6 +485,101 @@ ON DUPLICATE KEY UPDATE
 		}
 		return $links;
 	}
+	public static function javascript()
+	{
+		$ids = $mv_ids = $mv_id_formats = $mv_id_nice_names = array();
+		foreach(self::registered_metaverses() as $mv_id=>$mv_class)
+		{
+			$mv_ids[] = $mv_id;
+			$mv_id_formats[] = call_user_func(self::$metaverse_classes[$mv_id] . '::id_format');
+			$mv_id_nice_names[$mv_id] = mv_id_plugin::nice_name($mv_id);
+		}
+		foreach(self::get_all_mv_ids() as $mv_id)
+		{
+			if(isset($ids[$mv_id->metaverse]) === false)
+			{
+				$ids[$mv_id->metaverse] = array();
+			}
+			$ids[$mv_id->metaverse][] = array('user'=>$mv_id->user_id,'id'=>$mv_id->id);
+		}
+?>
+<script type="text/javascript">/*<![CDATA[*/
+mv_id_plugin = {
+	metaverses : <?php echo json_encode($mv_ids);?>,
+	ids        : <?php echo json_encode($ids);?>,
+	formats    : <?php echo json_encode($mv_id_formats);?>,
+	nice_names : <?php echo json_encode($mv_id_nice_names);?>,
+	add_more   : function()
+	{
+		var li = document.createElement('li');
+		var select = document.createElement('select');
+		select.name = 'add[' + mv_id_plugin__num_entries + '][metaverse]';
+		for(i in mv_id_plugin.metaverses)
+		{
+			var option = document.createElement('option');
+			option.value = mv_id_plugin.metaverses[i];
+			option.title = mv_id_plugin.formats[i];
+			option.appendChild(document.createTextNode(mv_id_plugin.nice_names[mv_id_plugin.metaverses[i]]));
+			select.appendChild(option);
+			select.appendChild(document.createTextNode("\n"));
+		}
+		var input = document.createElement('input');
+		input.type = 'text';
+		input.maxLength = 255;
+		input.name = 'add[' + (mv_id_plugin__num_entries++) + '][id]';
+		li.appendChild(select);
+		li.appendChild(input);
+		var ol = mv_id_plugin__id_div.getElementsByTagName('ol')[0];
+		ol.appendChild(li);
+	},
+	populate_select_mv : function(mv_element,ids_element,instance)
+	{
+		var select = document.getElementById(mv_element);
+				jQuery(select).empty();
+		for(i in mv_id_plugin.ids)
+		{
+			var value = i;
+			var option = '<option value="' + value + '"';
+			if(instance != undefined && instance.metaverse == value)
+			{
+				option += ' selected="selected"';
+			}
+			option += '>' + mv_id_plugin.nice_names[value] + '</option>';
+			jQuery(select).append(option + "\n");
+		}
+		mv_id_plugin.populate_select_id(mv_element,ids_element);
+		jQuery(select).change(function(){mv_id_plugin.populate_select_id(mv_element,ids_element,instance)});
+		jQuery(select).click(function(){mv_id_plugin.populate_select_id(mv_element,ids_element,instance)});
+	},
+	populate_select_id : function(mv_element,ids_element,instance)
+	{
+		var _select = document.getElementById(mv_element);
+		var select = document.getElementById(ids_element);
+		var options = _select.getElementsByTagName('option');
+		for(i in options)
+		{
+			if(options[i].selected == true)
+			{
+				jQuery(select).empty();
+				for(x in mv_id_plugin.ids[options[i].value])
+				{
+					var value = mv_id_plugin.ids[options[i].value][x].id;
+					var option = '<option value="' + value + '"';
+					if(instance != undefined && instance.id == value)
+					{
+						option += ' selected="selected"';
+					}
+					option += '>' + value + '</option>';
+					jQuery(select).append(option + "\n");
+				}
+				break;
+			}
+		}
+	}
+};
+/*]]>*/</script>
+<?php
+	}
 	public static function user_ids()
 	{
 		if(isset($_POST['delete']))
@@ -749,7 +593,7 @@ ON DUPLICATE KEY UPDATE
 				{
 					unset($_POST['add'][$metaverse][$id]);
 				}
-				if(($pos = array_search($delete_this,$_POST['update'])) !== false)
+				if(isset($_POST['update']) && ($pos = array_search($delete_this,$_POST['update'])) !== false)
 				{
 					unset($_POST['update'][$pos]);
 				}
@@ -767,16 +611,21 @@ ON DUPLICATE KEY UPDATE
 			foreach($_POST['update'] as $update_this)
 			{
 				list($metaverse,$id) = explode('::',$update_this);
-				$vcard = call_user_func_array(self::$metaverse_classes[$metaverse] . '::factory',array($id));
-				if($vcard instanceof mv_id_vcard_widget)
-				{
-					self::cache($metaverse,$id,$vcard);
-				}
+				self::refresh($metaverse,$id);
 			}
 		}
 		$mv_ids = self::get_all_mv_ids_and_cache();
 ?>
 	<h2>Your Metaverse IDs</h2>
+<?php	
+	if(count(self::registered_metaverses()) < 1)
+	{
+?>
+		<p>There are no Metaverses available to use.</p>
+<?php
+		return;
+	}
+?>
 	<form action="<?php echo str_replace( '%7E', '~', $_SERVER['REQUEST_URI']); ?>" method="post">
 <?php
 		if(count($mv_ids) > 0)
@@ -805,7 +654,7 @@ ON DUPLICATE KEY UPDATE
 				<td><?php
 				if($vcard instanceof mv_id_vcard_widget)
 				{
-					mv_id_vcard::output($vcard);
+					do_action('mv_id_plugin__output_vcard',$vcard);
 				}
 				else if($id->cache === NULL)
 				{
@@ -831,57 +680,24 @@ ON DUPLICATE KEY UPDATE
 			<ol>
 				<li><select name="add[0][metaverse]">
 <?php
-	$mv_ids = array();
-	$mv_id_formats = array();
 		foreach(self::registered_metaverses() as $mv_id=>$mv_class)
 		{
-			$mv_ids[] = $mv_id;
-			$mv_id_format = call_user_func(self::$metaverse_classes[$mv_id] . '::id_format');
-			$mv_id_formats[] = $mv_id_format;
-			$mv_id_nice_name = mv_id_plugin::nice_name($mv_id);
-			$mv_id_nice_names[] = $mv_id_nice_name;
 ?>
-				<option value="<?php echo $mv_id; ?>" title="<?php echo htmlentities2($mv_id_format); ?>"><?php echo htmlentities2($mv_id_nice_name); ?></option>
+				<option value="<?php echo $mv_id; ?>" title="<?php echo htmlentities2(call_user_func(self::$metaverse_classes[$mv_id] . '::id_format')); ?>"><?php echo htmlentities2(mv_id_plugin::nice_name($mv_id)); ?></option>
 
 <?php
 		}
 ?>
 				</select> <input name="add[0][id]" type="text" maxlength="255" /></li>
 			</ol>
-			<script type="text/javascript">
+			<script type="text/javascript">/*<![CDATA[*/
 var mv_id_plugin__id_div = document.getElementById('add-mv-ids');
 var mv_id_plugin__num_entries = 1;
-var mv_id_plugin__metaverse_ids = ["<?php echo implode('","',$mv_ids);?>"];
-var mv_id_plugin__metaverse_id_formats = ["<?php echo implode('","',$mv_id_formats);?>"];
-var mv_id_plugin__metaverse_nice_names = ["<?php echo implode('","',$mv_id_nice_names);?>"];
-function mv_id_plugin__add_more_button()
-{
-	var li = document.createElement('li');
-	var select = document.createElement('select');
-	select.name = 'add[' + mv_id_plugin__num_entries + '][metaverse]';
-	for(i in mv_id_plugin__metaverse_ids)
-	{
-		var option = document.createElement('option');
-		option.value = mv_id_plugin__metaverse_ids[i];
-		option.title = mv_id_plugin__metaverse_id_formats[i];
-		option.appendChild(document.createTextNode(mv_id_plugin__metaverse_nice_names[i]));
-		select.appendChild(option);
-		select.appendChild(document.createTextNode("\n"));
-	}
-	var input = document.createElement('input');
-	input.type = 'text';
-	input.maxLength = 255;
-	input.name = 'add[' + (mv_id_plugin__num_entries++) + '][id]';
-	li.appendChild(select);
-	li.appendChild(input);
-	var ol = mv_id_plugin__id_div.getElementsByTagName('ol')[0];
-	ol.appendChild(li);
-}
 var a = document.createElement('a');
-a.href = 'javascript:mv_id_plugin__add_more_button()';
+a.href = 'javascript:mv_id_plugin.add_more()';
 a.appendChild(document.createTextNode('Add More IDs'));
 mv_id_plugin__id_div.appendChild(a);
-			</script>
+			/*]]>*/</script>
 		</div>
 		<p>
 			<input type="submit" name="Submit" value="Update/Delete" />
@@ -974,6 +790,38 @@ mv_id_plugin__id_div.appendChild(a);
 }
 class mv_id_plugin_widgets
 {
+	# regex nabbed from http://svn.wp-plugins.org/sem-autolink-uri/trunk/sem-autolink-uri.php
+	const regex_linkify = "/
+		\b									# word boundary
+		(
+			(?:								# link starting with a scheme
+				http(?:s)?
+			|
+				ftp
+			)
+			:\/\/
+		|
+			www\.							# link starting with no scheme
+		)
+		(
+			(								# domain
+				localhost
+			|
+				[0-9a-zA-Z_\-]+
+				(?:\.[0-9a-zA-Z_\-]+)+
+			)
+			(?:								# maybe a subdirectory
+				\/
+				[0-9a-zA-Z~_\-+\.\/,&;]*
+			)?
+			(?:								# maybe some parameters
+				\?[0-9a-zA-Z~_\-+\.\/,&;=]+
+			)?
+			(?:								# maybe an id
+				\#[0-9a-zA-Z~_\-+\.\/,&;]+
+			)?
+		)
+		/imsx";
 	public static function name($metaverse,$id)
 	{
 		return 'Metaverse ID: ' . mv_id_plugin::nice_name($metaverse) . ' (' . $id . ')';
@@ -1010,6 +858,128 @@ class mv_id_plugin_widgets
 			}
 		}
 	}
+	public static function output(mv_id_vcard $vcard)
+	{
+		ob_start();
+		echo
+			str_repeat("\t",5),'<div class="hresume">',"\n",
+			str_repeat("\t",6),'<address class="contact vcard">',"\n",
+			str_repeat("\t",7),'<a class="url fn" rel="me" href="',$vcard->url(),'">',htmlentities2($vcard->name()),'</a><br />',"\n",
+			str_repeat("\t",7),'<span class="uid" style="display:none;">',$vcard->uid(),'</span>',"\n";
+		if($vcard->img() !== null)
+		{
+			echo str_repeat("\t",7),'<img class="photo" src="',$vcard->image_url(),'" alt="',htmlentities2($vcard->name()),'"  />',"\n";
+		}
+		echo str_repeat("\t",6),'</address>',"\n";
+		if(isset($vcard->stats()->bday))
+		{
+			echo str_repeat("\t",6),'<div class="vevent account-creation"><span class="summary"><span style="display: none;">',
+				htmlentities2($vcard->name()),'\'s',(mv_id_plugin::bday_label($vcard) === 'Created' ? ' account' : ' '),'</span>',
+				htmlentities2(mv_id_plugin::bday_label($vcard)),'</span>: <abbr class="dtstart" title="',
+				$vcard->stats()->bday,'">',date('jS M, Y',strtotime($vcard->stats()->bday)),'</abbr></div>',"\n";
+		}
+		if($vcard->description() !== null)
+		{
+			echo str_repeat("\t",6),'<p class="summary">',str_replace("\n","<br />\n",apply_filters('mv_id_linkify',htmlentities2($vcard->description()),null,array('me'))),'</p>',"\n";
+		}
+		if(is_array($vcard->skills()))
+		{
+			echo str_repeat("\t",6),'<ul>',"\n";
+			foreach($vcard->skills() as $skill)
+			{
+				echo str_repeat("\t",6),'<li>',"\n";
+				if(is_string($skill->url()))
+				{
+					echo '<a class="skill" rel="tag" href="',$skill->url(),'">';
+				}
+				else
+				{
+					echo '<span class="skill">';
+				}
+				echo htmlentities2($skill->name());
+				if(is_string($skill->url()))
+				{
+					echo '</a> ';
+				}
+				else
+				{
+					echo '</span> ';
+				}
+				echo htmlentities2($skill->value()),'</li>',"\n";
+			}
+			echo str_repeat("\t",6),'</ul>',"\n";
+		}
+		if(is_string(call_user_func(get_class($vcard) . '::affiliations_label')) && is_array($vcard->affiliations()))
+		{
+			echo
+				str_repeat("\t",6),'<strong>',htmlentities2(call_user_func(get_class($vcard) . '::affiliations_label')),'</strong>',"\n",
+				str_repeat("\t",7),'<ul>',"\n";
+				foreach($vcard->affiliations() as $affiliation)
+				{
+					echo str_repeat("\t",8),'<li class="affiliation vcard"><span class="fn org">';
+					if( $affiliation->url() !== false)
+					{
+						echo '<a class="url" href="',$affiliation->url(),'">';
+					}
+					echo htmlentities($affiliation->name(),ENT_QUOTES,'UTF-8');
+					if($affiliation->url() !== false)
+					{
+						echo '</a>';
+					}
+					echo '</span></li>',"\n";
+				}
+			echo str_repeat("\t",6),'</ul>',"\n";
+		}
+		echo str_repeat("\t",5),'</div>',"\n";
+		$hresume = ob_get_contents();
+		ob_end_clean();
+		echo apply_filters('post_output_mv_id_vcard',$hresume,$vcard);
+	}
+}
+class mv_id_plugin_widget extends WP_Widget {
+	public function __construct( $id_base = false, $widget_options = array(), $control_options = array() ) {
+		parent::__construct($id_base,'Metaverse ID',$widget_options,$control_options);
+	}
+    public function widget($args, $instance) {
+		$vcard = mv_id_plugin::get($instance['metaverse'],$instance['id']);
+		if(($vcard instanceof mv_id_vcard_widget) === false)
+		{
+			return;
+		}
+        extract( $args );
+		echo $before_widget,$before_title,$instance['title'],$after_title,mv_id_plugin_widgets::output($vcard),$after_widget;
+    }
+	public function form($instance)
+	{
+		if(empty($instance) === false)
+		{
+			$vcard = mv_id_plugin::get($instance['metaverse'],$instance['id']);
+?>
+		<em>Current</em>
+		<?php if(($vcard instanceof mv_id_vcard_widget) === false)
+			{?>
+		<p><?php echo wp_specialchars($instance['metaverse']),'<br />',"\n",wp_specialchars($instance['id']); ?></p>
+<?php
+			}
+			else
+			{
+				?> <hr /> <?php
+				mv_id_plugin_widgets::output($vcard);
+				?> <hr /> <?php
+			}
+		}
+?>
+		<p><select id="<?php echo $this->get_field_id('metaverse'); ?>" name="<?php echo $this->get_field_name('metaverse'); ?>"></select></p>
+		<p><select id="<?php echo $this->get_field_id('id'); ?>" name="<?php echo $this->get_field_name('id'); ?>"></select></p>
+		<script type="text/javascript">/*<![CDATA[*/
+mv_id_plugin.populate_select_mv('<?php echo $this->get_field_id('metaverse'); ?>','<?php echo $this->get_field_id('id'),'\',',json_encode($instance); ?>);
+		/*]]>*/</script>
+<?php
+	}
+	function update($new, $old) {
+		$this->name = $new_instance['metaverse'] . '::' . $new_instance['id'];
+		return $new;
+	}
 }
 require_once('metaverses/second-life.php');
 require_once('metaverses/free-realms.php');
@@ -1020,9 +990,13 @@ require_once('metaverses/eve.php');
 require_once('metaverses/pq.php');
 register_activation_hook(__FILE__,'mv_id_plugin::activate');
 register_deactivation_hook(__FILE__,'mv_id_plugin::deactivate');
+add_action('widgets_init', create_function('', 'return register_widget("mv_id_plugin_widget");'));
 add_action('mv_id_plugin__regenerate_cache','mv_id_plugin::cron');
+add_action('mv_id_plugin__output_vcard','mv_id_plugin_widgets::output');
 add_action('admin_menu','mv_id_plugin::admin_actions');
-add_action('plugins_loaded','mv_id_plugin_widgets::register');
+add_action('plugins_loaded','mv_id_plugin::register_metaverses');
+add_action('widgets_init','mv_id_plugin_widgets::register');
 add_action('delete_user','mv_id_plugin::delete_user');
 add_action('profile_update','mv_id_plugin::profile_update');
+add_action('admin_head','mv_id_plugin::javascript');
 ?>

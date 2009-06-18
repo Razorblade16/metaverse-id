@@ -1,4 +1,30 @@
 <?php
+/*
+Plugin Name: MV ID::World of Warcraft
+Plugin URI: http://blog.signpostmarv.name/mv-id/
+Description: Display your WoW Identity. Requires <a href="http://blog.signpostmarv.name/mv-id/">Metaverse ID</a>.
+Version: 1.0
+Author: SignpostMarv Martin
+Author URI: http://blog.signpostmarv.name/
+ Copyright 2009 SignpostMarv Martin  (email : mv-id.wp@signpostmarv.name)
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/
+if(class_exists('mv_id_vcard') === false)
+{
+	return;
+}
 abstract class mv_id_vcard_wow extends mv_id_vcard
 {
 	const sprintf_url = '#';
@@ -75,6 +101,10 @@ abstract class mv_id_vcard_wow extends mv_id_vcard
 }
 class mv_id_vcard_wow_eu extends mv_id_vcard_wow
 {
+	public static function register_metaverse()
+	{
+		mv_id_plugin::register_metaverse('WoW Europe','WoW EU','mv_id_vcard_wow_eu');
+	}
 	public static function factory($id)
 	{
 		if(self::is_id_valid($id) === false)
@@ -100,13 +130,17 @@ class mv_id_vcard_wow_eu extends mv_id_vcard_wow
 			}
 		}
 	}
-	public static function widget(array $args)
+	public static function get_widget(array $args)
 	{
 		self::get_widgets('WoW EU',$args);
 	}
 }
 class mv_id_vcard_wow_us extends mv_id_vcard_wow
 {
+	public static function register_metaverse()
+	{
+		mv_id_plugin::register_metaverse('WoW US','WoW US','mv_id_vcard_wow_us');
+	}
 	public static function factory($id)
 	{
 		if(self::is_id_valid($id) === false)
@@ -132,11 +166,11 @@ class mv_id_vcard_wow_us extends mv_id_vcard_wow
 			}
 		}
 	}
-	public static function widget(array $args)
+	public static function get_widget(array $args)
 	{
 		self::get_widgets('WoW US',$args);
 	}
 }
-mv_id_plugin::register_metaverse('WoW Europe','WoW EU','mv_id_vcard_wow_eu');
-mv_id_plugin::register_metaverse('WoW US','WoW US','mv_id_vcard_wow_us');
+add_action('mv_id_plugin__register_metaverses','mv_id_vcard_wow_eu::register_metaverse');
+add_action('mv_id_plugin__register_metaverses','mv_id_vcard_wow_us::register_metaverse');
 ?>
