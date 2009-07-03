@@ -52,15 +52,24 @@ class mv_id_vcard_agni_sl extends mv_id_vcard
 	{
 		return 'Your avatar UUID.';
 	}
-	protected static function scrape($url)
+	protected static function scrape($url,$last_mod=false)
 	{
-		$ch = curl_init($url);
-		curl_setopt_array($ch,array(
-			CURLOPT_RETURNTRANSFER => true,
-		));
-		$data = curl_exec($ch);
-		curl_close($ch);
-		$data = html_entity_decode($data,ENT_QUOTES,'UTF-8');
+		$curl_opts = array();
+		if($last_mod !== false)
+		{
+			$curl_opts['headers'] = array(
+				'If-Modified-Since'=>$last_mod,
+			);
+		}
+		$data = mv_id_plugin::curl(
+			$url,
+			$curl_opts
+		);
+		if($data === true)
+		{
+			return $data;
+		}
+		$data = html_entity_decode( $data,ENT_QUOTES,'UTF-8');
 		static $meta_start = '<meta name="description" content="';
 		static $meta_end = '<meta name="mat"';
 		if(($start = strpos($data,$meta_start)) !== false)
@@ -136,13 +145,20 @@ class mv_id_vcard_agni_sl extends mv_id_vcard
 			return array($name,$image,$description,$url,$stats);
 		}
 	}
-	public static function factory($id)
+	public static function factory($id,$last_mod=false)
 	{
-		$data = self::scrape(sprintf(self::sprintf_scrape,$id));
+		$data = self::scrape(sprintf(self::sprintf_scrape,$id),$last_mod);
 		if(isset($data))
 		{
-			$stats = (isset($data[4]) && empty($data[4]) === false) ? new mv_id_stats($data[4]) : null;
-			return new self($id,$data[0],$data[1],$data[2],$data[3],$stats);
+			if(is_array($data))
+			{
+				$stats = (isset($data[4]) && empty($data[4]) === false) ? new mv_id_stats($data[4]) : null;
+				return new self($id,$data[0],$data[1],$data[2],$data[3],$stats);
+			}
+			else
+			{
+				return $data;
+			}
 		}
 		else
 		{
@@ -162,13 +178,20 @@ class mv_id_vcard_teen_sl extends mv_id_vcard_agni_sl
 	{
 		mv_id_plugin::register_metaverse('Teen SL','teen SL','mv_id_vcard_teen_sl');
 	}
-	public static function factory($id)
+	public static function factory($id,$last_mod=false)
 	{
-		$data = self::scrape(sprintf(self::sprintf_scrape,$id));
+		$data = self::scrape(sprintf(self::sprintf_scrape,$id),$last_mod);
 		if(isset($data))
 		{
-			$stats = (isset($data[4]) && empty($data[4]) === false) ? new mv_id_stats($data[4]) : null;
-			return new self($id,$data[0],$data[1],$data[2],$data[3],$stats);
+			if(is_array($data))
+			{
+				$stats = (isset($data[4]) && empty($data[4]) === false) ? new mv_id_stats($data[4]) : null;
+				return new self($id,$data[0],$data[1],$data[2],$data[3],$stats);
+			}
+			else
+			{
+				return $data;
+			}
 		}
 		else
 		{

@@ -45,15 +45,23 @@ abstract class mv_id_vcard_wow extends mv_id_vcard
 	{
 		return 'Guild';
 	}
-	protected static function scrape($url)
+	protected static function scrape($url,$last_mod=false)
 	{
-		$ch = curl_init($url);
-		curl_setopt_array($ch,array(
-			CURLOPT_RETURNTRANSFER => true,
-			CURLOPT_USERAGENT      => 'This Is Not Firefox/3.0.10',
-		));
-		$data = curl_exec($ch);
-		curl_close($ch);
+		$curl_opts = array('user-agent' => 'This Is Not Firefox/3.0.10');
+		if($last_mod !== false)
+		{
+			$curl_opts['headers'] = array(
+				'If-Modified-Since'=>$last_mod,
+			);
+		}
+		$data = mv_id_plugin::curl(
+			$url,
+			$curl_opts
+		);
+		if($data === true)
+		{
+			return true;
+		}
 		if((($XML = mv_id_plugin::SimpleXML($data)) instanceof SimpleXMLElement) === false)
 		{
 			return false;
@@ -67,6 +75,10 @@ abstract class mv_id_vcard_wow extends mv_id_vcard
 				foreach($xpath[0]->attributes() as $attribute => $value)
 				{
 					$$attribute = (string)$value;
+				}
+				if($last_mod !== false && (strtotime($lastModified) <= $last_mod))
+				{
+					return false;
 				}
 				$skills = array();
 				$skills[] = new mv_id_skill('Achievement Points',(int)$points,'http://www.wowwiki.com/Achievement');
@@ -105,7 +117,7 @@ class mv_id_vcard_wow_eu extends mv_id_vcard_wow
 	{
 		mv_id_plugin::register_metaverse('WoW Europe','WoW EU','mv_id_vcard_wow_eu');
 	}
-	public static function factory($id)
+	public static function factory($id,$last_mod=false)
 	{
 		if(self::is_id_valid($id) === false)
 		{
@@ -114,7 +126,7 @@ class mv_id_vcard_wow_eu extends mv_id_vcard_wow
 		else
 		{
 			list($realm,$name) = explode(' ',$id);
-			$data = self::scrape(sprintf('http://eu.wowarmory.com/character-sheet.xml?r=%s&n=%s',$realm,$name));
+			$data = self::scrape(sprintf('http://eu.wowarmory.com/character-sheet.xml?r=%s&n=%s',$realm,$name),$last_mod);
 			if(is_array($data))
 			{
 				list($name,$description,$genderId,$raceId,$classId,$level,$url) = $data;

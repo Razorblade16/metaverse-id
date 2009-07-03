@@ -47,7 +47,7 @@ class mv_id_vcard_pq extends mv_id_vcard
 	{
 		return 'Guild';
 	}
-	public static function factory($id)
+	public static function factory($id,$last_mod=false)
 	{
 		if(self::is_id_valid($id) === false)
 		{
@@ -57,12 +57,21 @@ class mv_id_vcard_pq extends mv_id_vcard
 		{
 			list($name,$realm) = explode(' of ',$id);
 			$url = sprintf('http://progressquest.com/%s.php?name=%s',strtolower($realm),strtolower($name));
-			$ch = curl_init($url);
-			curl_setopt_array($ch,array(
-				CURLOPT_RETURNTRANSFER => true,
-			));
-			$data = curl_exec($ch);
-			curl_close($ch);
+			$curl_opts = array();
+			if($last_mod !== false)
+			{
+				$curl_opts['headers'] = array(
+					'If-Modified-Since'=>$last_mod,
+				);
+			}
+			$data = mv_id_plugin::curl(
+				$url,
+				$curl_opts
+			);
+			if($data === true)
+			{
+				return true;
+			}
 			$doc = mv_id_plugin::DOMDocument($data);
 			if($doc instanceof DOMDocument)
 			{

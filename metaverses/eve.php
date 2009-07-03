@@ -64,7 +64,7 @@ class mv_id_vcard_eve extends mv_id_vcard implements mv_id_needs_admin
 		);
 		return $fields;
 	}
-	public static function factory($id)
+	public static function factory($id,$last_mod=false)
 	{
 		if(self::is_id_valid($id) === false || ($config = get_option('mv-id::EVE')) === false)
 		{
@@ -72,18 +72,24 @@ class mv_id_vcard_eve extends mv_id_vcard implements mv_id_needs_admin
 		}
 		else
 		{
-			$data_url = 'http://api.eve-online.com/char/CharacterSheet.xml.aspx';
-			$url = sprintf('http://www.eveonline.com/character/skilltree.asp?characterID=%u',$id);
+			$url = 'http://api.eve-online.com/char/CharacterSheet.xml.aspx';
 			$config = unserialize($config);
 			$config['characterID'] = $id;
-			$ch = curl_init($data_url);
-			curl_setopt_array($ch,array(
-				CURLOPT_RETURNTRANSFER => true,
-				CURLOPT_POST           => true,
-				CURLOPT_POSTFIELDS     => $config,
-			));
-			$data = curl_exec($ch);
-			curl_close($ch);
+			$curl_opts = array('user-agent' => 'This Is Not Firefox/3.0.10','method'=>'post','body'=>$config);
+			if($last_mod !== false)
+			{
+				$curl_opts['headers'] = array(
+					'If-Modified-Since'=>$last_mod,
+				);
+			}
+			$data = mv_id_plugin::curl(
+				$url,
+				$curl_opts
+			);
+			if($data === true)
+			{
+				return true;
+			}
 			if((($XML = mv_id_plugin::SimpleXML($data)) instanceof SimpleXMLElement) === false)
 			{
 				return false;

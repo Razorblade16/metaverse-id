@@ -42,16 +42,31 @@ class mv_id_vcard_freerealms extends mv_id_vcard
 	{
 		return 'Copy & paste the number from the end of your profile URL.';
 	}
-	public static function factory($id)
+	public static function factory($id,$last_mod=false)
 	{
-		$cookie_jar = tempnam(sys_get_temp_dir(),'mv-id');
-		$data = json_decode(mv_id_plugin::curl(
+		if(self::is_id_valid($id) === false)
+		{
+			return false;
+		}
+		$curl_opts = array();
+		if($last_mod !== false)
+		{
+			$curl_opts['headers'] = array(
+				'If-Modified-Since'=>$last_mod,
+			);
+		}
+		$data = mv_id_plugin::curl(
 			sprintf(self::sprintf_scrape,$id),
-			array(
-				CURLOPT_COOKIEFILE => $cookie_jar,
-				CURLOPT_COOKIEJAR => $cookie_jar,
-			)
-		));
+			$curl_opts
+		);
+		if($data === true)
+		{
+			return true;
+		}
+		else
+		{
+			$data = json_decode($data);
+		}
 		if(isset($data->characterList))
 		{
 			$uid = $namne = $img = $description = null;

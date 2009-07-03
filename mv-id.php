@@ -1,11 +1,11 @@
 <?php
 /*
 Plugin Name: Metaverse ID
-Plugin URI: http://blog.signpostmarv.name/mv-id/
+Plugin URI: http://signpostmarv.name/mv-id/
 Description: Display your identity from around the metaverse!
-Version: 0.10.0
+Version: 0.11.0
 Author: SignpostMarv Martin
-Author URI: http://blog.signpostmarv.name/
+Author URI: http://signpostmarv.name/
  Copyright 2009 SignpostMarv Martin  (email : mv-id.wp@signpostmarv.name)
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -96,6 +96,30 @@ class mv_id_plugin
 	}
 	public static function curl($url,array $curl_opts=null)
 	{
+		if(isset($curl_opts['method']) === false || $curl_opts['method'] === 'get')
+		{
+			$resp = wp_remote_get($url,$curl_opts);
+		}
+		else
+		{
+			$resp = wp_remote_post($url,$curl_opts);
+		}
+		if(is_wp_error($resp))
+		{
+			return null;
+		}
+		if(isset($curl_opts,$curl_opts['headers'],$curl_opts['headers']['If-Modified-Since']))
+		{
+			$header = wp_remote_retrieve_header($resp,'last-modified');
+			if(isset($header) && strtotime($header) <= $curl_opts['headers']['If-Modified-Since'])
+			{
+				return true;
+			}
+		}
+		else
+		{
+			return wp_remote_retrieve_body($resp);
+		}
 		$ch = curl_init($url);
 		if(empty($curl_opts))
 		{
@@ -119,9 +143,12 @@ class mv_id_plugin
 			$curl_opts[CURLOPT_FOLLOWLOCATION] = false;
 			$curl_opts[CURLOPT_HEADER] = true;
 		}
+		if(isset($curl_opts[CURLOPT_TIMEVALUE]) !== false)
+		{
+			$curl_opts[CURLOPT_FILETIME] = true;
+		}
 		curl_setopt_array($ch,$curl_opts);
 		$data = curl_exec($ch);
-		curl_close($ch);
 		if($no_hack_needed === false)
 		{
 			$redirects = 5;
@@ -143,7 +170,17 @@ class mv_id_plugin
 			}
 			$data = trim(substr($data,strpos($data,"\r\n\r\n")));
 		}
+		if(isset($curl_opts[CURLOPT_TIMEVALUE]) && curl_getinfo($ch,CURLINFO_FILETIME) !== -1 && ($curl_opts[CURLOPT_TIMEVALUE] <= curl_getinfo($ch,CURLINFO_FILETIME)))
+		{
+			return false;
+		}
+		curl_close($ch);
 		return $data;
+	}
+	protected static function wpdb()
+	{
+		global $wpdb;
+		return $wpdb;
 	}
 	public static function bday_label(mv_id_vcard_widget $vcard)
 	{
@@ -216,7 +253,6 @@ PRIMARY KEY ( `user_id`,`metaverse` , `id` )
 	public static function register_metaverses()
 	{
 		do_action('mv_id_plugin__register_metaverses');
-		mv_id_plugin::cron();
 	}
 	public static function delete_user($user_ID)
 	{
@@ -239,11 +275,10 @@ PRIMARY KEY ( `user_id`,`metaverse` , `id` )
 	public static function cron()
 	{
 		global $wpdb;
-		$wpdb->query('UPDATE ' . self::db_tablename() . ' SET cache=NULL WHERE (NOW() - last_mod) >= 3600');
-		$uncached = self::get_uncached_mv_ids(true,true);
-		if(isset($uncached) && is_array($uncached) && count($uncached) > 0)
+		$mv_ids = self::get_all_mv_ids(true);
+		if(isset($mv_ids) && is_array($mv_ids) && count($mv_ids) > 0)
 		{
-			foreach($uncached as $id)
+			foreach($mv_ids as $id)
 			{
 				self::refresh($id->metaverse,$id->id);
 			}
@@ -251,10 +286,19 @@ PRIMARY KEY ( `user_id`,`metaverse` , `id` )
 	}
 	protected static function refresh($metaverse,$id)
 	{
-		$vcard = call_user_func_array(self::$metaverse_classes[$metaverse] . '::factory',array($id));
+		$vcard = call_user_func_array(self::$metaverse_classes[$metaverse] . '::factory',array($id,self::get_mv_id_last_mod($metaverse,$id)));
 		if(isset($vcard) && ($vcard instanceof mv_id_vcard_widget))
 		{
 			self::cache($metaverse,$id,$vcard);
+		}
+		else if(isset($vcard) && $vcard === true)
+		{
+			static $tweak_sql;
+			if(isset($tweak_sql) === false)
+			{
+				$tweak_sql = 'UPDATE ' . self::db_tablename() . ' SET last_mod=NOW() WHERE metaverse = %s AND id = %s';
+			}
+			self::wpdb()->query(self::wpdb()->prepare($tweak_sql,$metaverse,$id));
 		}
 	}
 	public static function table_exists()
@@ -314,7 +358,7 @@ ON DUPLICATE KEY UPDATE
 			static $cache_sql;
 			if(isset($cache_sql) === false)
 			{
-				$cache_sql = 'UPDATE ' . self::db_tablename() . ' SET cache = %s WHERE metaverse = %s AND id = %s';
+				$cache_sql = 'UPDATE ' . self::db_tablename() . ' SET cache = %s,last_mod=NOW() WHERE metaverse = %s AND id = %s';
 			}
 			return $wpdb->query($wpdb->prepare($cache_sql,serialize($vcard),$metaverse,$id));
 		}
@@ -339,6 +383,23 @@ ON DUPLICATE KEY UPDATE
 		else
 		{
 			return false;
+		}
+	}
+	public static function get_mv_id_last_mod($metaverse,$id,$force=false)
+	{
+		static $get_sql;
+		if(isset($get_sql) === false)
+		{
+			$get_sql = 'SELECT last_mod FROM ' . self::db_tablename() . ' WHERE metaverse=%s AND id=%s AND cache IS NOT NULL ORDER BY last_mod DESC LIMIT 1';
+		}
+		$last_mod = self::wpdb()->get_var(self::wpdb()->prepare($get_sql,$metaverse,$id));
+		if(empty($last_mod))
+		{
+			return false;
+		}
+		else
+		{
+			return strtotime($last_mod);
 		}
 	}
 	public static function get_all_mv_ids($force=false)

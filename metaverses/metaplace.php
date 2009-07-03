@@ -41,18 +41,26 @@ class mv_id_vcard_metaplace extends mv_id_vcard
 	{
 		return (bool)preg_match('/^([\w\d]+)$/',$id);
 	}
-	public static function factory($id)
+	public static function factory($id,$last_mod=false)
 	{
 		if(self::is_id_valid($id) !== false)
 		{
-			$ch = curl_init(sprintf('https://api.metaplace.com/api/v0.2/public/user/profile/%s',$id));
-			curl_setopt_array($ch,array(
-				CURLOPT_HEADER => false,
-				CURLOPT_SSL_VERIFYPEER=>false,
-				CURLOPT_RETURNTRANSFER => true,
-			));
-			$data = curl_exec($ch);
-			curl_close($ch);
+			$url = sprintf('https://api.metaplace.com/api/v0.2/public/user/profile/%s',$id);
+			$curl_opts = array();
+			if($last_mod !== false)
+			{
+				$curl_opts['headers'] = array(
+					'If-Modified-Since'=>$last_mod,
+				);
+			}
+			$data = mv_id_plugin::curl(
+				$url,
+				$curl_opts
+			);
+			if($data === true)
+			{
+				return true;
+			}
 			if((($XML = mv_id_plugin::SimpleXML($data)) instanceof SimpleXMLElement) === false)
 			{
 				return false;

@@ -3,7 +3,7 @@ Contributors: signpostmarv
 Tags: mv-id, MV-ID, Metaverse, ID, hCard, vCard, hResume, hCalendar, vEvent, iCal, identity, profile, SL, Second Life, WoW, World of Warcraft, LotRO, Metaplace, EVE, EVE Online, Progress Quest
 Requires at least: 2.8
 Tested up to: 2.8
-Stable tag: 0.10.0
+Stable tag: 0.11.0
 
 Display your identity from around the metaverse!
 
@@ -18,12 +18,8 @@ Supported Metaverses
 * Lord of the Rings Online
 * Metaplace
 * Progress Quest
-* Second Life
- * Agni/Main Grid
- * Teen Second Life
-* World of Warcraft
- * European servers
- * US Servers
+* Second Life (Agni/Main Grid, Teen Second Life)
+* World of Warcraft (Europe, US)
 
 Metaverse Configuration
 --------------------
@@ -56,8 +52,11 @@ If you try to update a Metaverse ID and you repeatedly get a message to the effe
 To-do
 --------------------
 * Give admin-level users ability to delete/update all IDs.
-* Add option to auto-detect links in profile text and apply appropriate XFN values.
 * Add generic hCard/hResume parser
+
+0.11.0
+--------------------
+* Switched to the HTTP API found in WP 2.8 (no more requirement for curl to be installed)
 
 0.10.0
 --------------------
