@@ -3,7 +3,7 @@
 Plugin Name: Metaverse ID
 Plugin URI: http://signpostmarv.name/mv-id/
 Description: Display your identity from around the metaverse!
-Version: 0.11.0
+Version: 0.12
 Author: SignpostMarv Martin
 Author URI: http://signpostmarv.name/
  Copyright 2009 SignpostMarv Martin  (email : mv-id.wp@signpostmarv.name)
@@ -96,86 +96,116 @@ class mv_id_plugin
 	}
 	public static function curl($url,array $curl_opts=null)
 	{
-		if(isset($curl_opts['method']) === false || $curl_opts['method'] === 'get')
+		if(get_option('mv-id::use::HTTP API') === 'wordpress')
 		{
-			$resp = wp_remote_get($url,$curl_opts);
-		}
-		else
-		{
-			$resp = wp_remote_post($url,$curl_opts);
-		}
-		if(is_wp_error($resp))
-		{
-			return null;
-		}
-		if(isset($curl_opts,$curl_opts['headers'],$curl_opts['headers']['If-Modified-Since']))
-		{
-			$header = wp_remote_retrieve_header($resp,'last-modified');
-			if(isset($header) && strtotime($header) <= $curl_opts['headers']['If-Modified-Since'])
+			if(isset($curl_opts['method']) === false || $curl_opts['method'] === 'get')
 			{
-				return true;
+				$resp = wp_remote_get($url,$curl_opts);
+			}
+			else
+			{
+				$resp = wp_remote_post($url,$curl_opts);
+			}
+			if(is_wp_error($resp))
+			{
+				return null;
+			}
+			if(isset($curl_opts,$curl_opts['headers'],$curl_opts['headers']['If-Modified-Since']))
+			{
+				$header = wp_remote_retrieve_header($resp,'last-modified');
+				if(isset($header) && strtotime($header) <= $curl_opts['headers']['If-Modified-Since'])
+				{
+					return true;
+				}
+			}
+			else
+			{
+				return wp_remote_retrieve_body($resp);
 			}
 		}
 		else
 		{
-			return wp_remote_retrieve_body($resp);
-		}
-		$ch = curl_init($url);
-		if(empty($curl_opts))
-		{
-			$curl_opts = array();
-		}
-		if(isset($curl_opts[CURLOPT_SSL_VERIFYPEER]) === false)
-		{
-			$curl_opts[CURLOPT_SSL_VERIFYPEER] = false;
-		}
-		if(isset($curl_opts[CURLOPT_RETURNTRANSFER]) === false)
-		{
-			$curl_opts[CURLOPT_RETURNTRANSFER] = true;
-		}
-		$no_hack_needed = (ini_get('safe_mode') !== '1' && ini_get('open_basedir') === false);
-		if($no_hack_needed)
-		{
-			$curl_opts[CURLOPT_FOLLOWLOCATION] = true;
-		}
-		else
-		{
-			$curl_opts[CURLOPT_FOLLOWLOCATION] = false;
-			$curl_opts[CURLOPT_HEADER] = true;
-		}
-		if(isset($curl_opts[CURLOPT_TIMEVALUE]) !== false)
-		{
-			$curl_opts[CURLOPT_FILETIME] = true;
-		}
-		curl_setopt_array($ch,$curl_opts);
-		$data = curl_exec($ch);
-		if($no_hack_needed === false)
-		{
-			$redirects = 5;
-			while($redirects>0)
+			$ch = curl_init($url);
+			if(empty($curl_opts))
 			{
-				if(($pos = strpos($data,'Location: http')) !== false)
-				{
-					$pos = strpos($data,'http',$pos);
-					$url = substr($data,$pos,strpos($data,"\r\n",$pos) - $pos);
-					$ch = curl_init($url);
-					curl_setopt_array($ch,$curl_opts);
-					$data = curl_exec($ch);
-					--$redirects;
-				}
-				else
-				{
-					$redirects = 0;
-				}
+				$curl_opts = array();
 			}
-			$data = trim(substr($data,strpos($data,"\r\n\r\n")));
+			else
+			{
+				$_curl_opts = array();
+				if(isset($curl_opts['headers']) === true)
+				{
+					if(isset($curl_opts['headers']['If-Modified-Since']) === true)
+					{
+						$_curl_opts[CURLOPT_TIMEVALUE] = $curl_opts['headers']['If-Modified-Since'];
+					}
+					if(isset($curl_opts['method']) && $curl_opts['method'] === 'post')
+					{
+						$_curl_opts[CURLOPT_POST] = true;
+						if(isset($curl_opts['body']) === true)
+						{
+							$_curl_opts[CURLOPT_POSTFIELDS] = $curl_opts['body'];
+						}
+					}
+					if(isset($curl_opts['user-agent']) === true)
+					{
+						$_curl_opts[CURLOPT_USERAGENT] = $curl_opts['user-agent'];
+					}
+				}
+				$curl_opts = $_curl_opts;
+			}
+			if(isset($curl_opts[CURLOPT_SSL_VERIFYPEER]) === false)
+			{
+				$curl_opts[CURLOPT_SSL_VERIFYPEER] = false;
+			}
+			if(isset($curl_opts[CURLOPT_RETURNTRANSFER]) === false)
+			{
+				$curl_opts[CURLOPT_RETURNTRANSFER] = true;
+			}
+			$no_hack_needed = (ini_get('safe_mode') !== '1' && ini_get('open_basedir') === false);
+			if($no_hack_needed)
+			{
+				$curl_opts[CURLOPT_FOLLOWLOCATION] = true;
+			}
+			else
+			{
+				$curl_opts[CURLOPT_FOLLOWLOCATION] = false;
+				$curl_opts[CURLOPT_HEADER] = true;
+			}
+			if(isset($curl_opts[CURLOPT_TIMEVALUE]) !== false)
+			{
+				$curl_opts[CURLOPT_FILETIME] = true;
+			}
+			curl_setopt_array($ch,$curl_opts);
+			$data = curl_exec($ch);
+			if($no_hack_needed === false)
+			{
+				$redirects = 5;
+				while($redirects>0)
+				{
+					if(($pos = strpos($data,'Location: http')) !== false)
+					{
+						$pos = strpos($data,'http',$pos);
+						$url = substr($data,$pos,strpos($data,"\r\n",$pos) - $pos);
+						$ch = curl_init($url);
+						curl_setopt_array($ch,$curl_opts);
+						$data = curl_exec($ch);
+						--$redirects;
+					}
+					else
+					{
+						$redirects = 0;
+					}
+				}
+				$data = trim(substr($data,strpos($data,"\r\n\r\n")));
+			}
+			if(isset($curl_opts[CURLOPT_TIMEVALUE]) && curl_getinfo($ch,CURLINFO_FILETIME) !== -1 && ($curl_opts[CURLOPT_TIMEVALUE] <= curl_getinfo($ch,CURLINFO_FILETIME)))
+			{
+				return false;
+			}
+			curl_close($ch);
+			return $data;
 		}
-		if(isset($curl_opts[CURLOPT_TIMEVALUE]) && curl_getinfo($ch,CURLINFO_FILETIME) !== -1 && ($curl_opts[CURLOPT_TIMEVALUE] <= curl_getinfo($ch,CURLINFO_FILETIME)))
-		{
-			return false;
-		}
-		curl_close($ch);
-		return $data;
 	}
 	protected static function wpdb()
 	{
@@ -486,6 +516,12 @@ ON DUPLICATE KEY UPDATE
 	}
 	public static function registered_metaverses()
 	{
+		static $sorted = false;
+		if($sorted === false)
+		{
+			asort(self::$metaverse_classes);
+			$sorted = true;
+		}
 		return self::$metaverse_classes;
 	}
 	public static function nice_name($metaverse)
@@ -527,10 +563,7 @@ ON DUPLICATE KEY UPDATE
 		{
 			add_submenu_page('profile.php', 'Metaverse ID', 'Metaverse ID', 'read', 'mv-id', 'mv_id_plugin::user_ids');
 		}
-		if(self::mv_needs_admin() !== array())
-		{
-			add_options_page('Metaverse ID','Metaverse ID',1,'mv-id','mv_id_plugin::admin');
-		}
+		add_options_page('Metaverse ID','Metaverse ID',1,'mv-id','mv_id_plugin::admin');
 		add_filter('plugin_action_links', 'mv_id_plugin::plugin_actions', 10, 2);
 	}
 	public static function plugin_actions($links, $file) {
@@ -768,11 +801,17 @@ mv_id_plugin__id_div.appendChild(a);
 	}
 	public static function admin()
 	{
+		$http_api2use_label = 'mv-id::use::HTTP_API';
+		$http_api2use = get_option($http_api2use_label);
 		if(isset($_POST) && empty($_POST) === false)
 		{
 			$needs_admin = self::mv_needs_admin();
 			foreach(array_keys($_POST) as $metaverse)
 			{
+				if($metaverse === $http_api2use_label)
+				{
+					continue;
+				}
 				if(isset($needs_admin[$metaverse]) === false)
 				{
 					unset($_POST[$metaverse]);
@@ -802,6 +841,19 @@ mv_id_plugin__id_div.appendChild(a);
 			}
 			else
 			{
+				if(isset($_POST[$http_api2use_label]) === true)
+				{
+					if($http_api2use !== false)
+					{
+						update_option($http_api2use_label,$_POST[$http_api2use_label]);
+					}
+					else
+					{
+						add_option($http_api2use_label,$_POST[$http_api2use_label],'','no');
+					}
+					$http_api2use = get_option($http_api2use_label);
+					unset($_POST[$http_api2use_label]);
+				}
 				foreach($_POST as $metaverse=>$config)
 				{
 					$option_label = 'mv-id::' . $metaverse;
@@ -820,32 +872,43 @@ mv_id_plugin__id_div.appendChild(a);
 ?>
 	<h2>Metaverse ID Admin</h2>
 	<form action="<?php echo str_replace( '%7E', '~', $_SERVER['REQUEST_URI']); ?>" method="post">
+		<fieldset>
+			<legend>HTTP API</legend>
+			<ol>
+				<li title="uses PHP cURL extension"><label for="http-api-mv-id">MV-ID Custom </label> <input id="http-api-mv-id" type="radio" name="mv-id::use::HTTP_API" value="mv-id"<?php if($http_api2use === 'mv-id' || $http_api2use === false){ ?> checked="checked"<?php } ?> /></li>
+				<li><label for="http-api-wp">WordPress </label> <input id="http-api-wp" type="radio" name="mv-id::use::HTTP_API" value="wordpress"<?php if($http_api2use === 'wordpress'){ ?> checked="checked"<?php } ?> /></li>
+			</ol>
+		</fieldset>
 <?php
-		foreach(self::mv_needs_admin() as $metaverse=>$class)
+		$mvs_needing_admin = self::mv_needs_admin();
+		if(empty($mvs_needing_admin) === false)
 		{
-			$fields = call_user_func($class . '::admin_fields');
-			$option = get_option('mv-id::' . $metaverse);
-			if($option)
+			foreach($mvs_needing_admin as $metaverse=>$class)
 			{
-				$option = unserialize($option);
-			}
+				$fields = call_user_func($class . '::admin_fields');
+				$option = get_option('mv-id::' . $metaverse);
+				if($option)
+				{
+					$option = unserialize($option);
+				}
 ?>
 		<fieldset>
 			<legend><?php echo htmlentities2(self::nice_name($metaverse));?></legend>
 			<ol>
 <?php
-			foreach($fields as $id=>$field)
-			{
+				foreach($fields as $id=>$field)
+				{
 ?>				<li><label for="<?php echo str_replace(' ','_',$metaverse),'-',$id; ?>"><?php echo htmlentities2($field['name']);?></label> <input id="<?php echo str_replace(' ','_',$metaverse),'-',$id; ?>" name="<?php echo $metaverse,'[',$id; ?>]" <?php if($option){ echo 'value="',$option[$id],'"';} ?> /></li>
 <?php
-			}
+				}
 ?>
 			</ol>
-			<input type="submit" value="Configure" />
 		</fieldset>
 <?php
+			}
 		}
 ?>
+		<input type="submit" value="Configure" />
 	</form>
 <?php }
 }

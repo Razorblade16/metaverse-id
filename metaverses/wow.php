@@ -39,7 +39,20 @@ abstract class mv_id_vcard_wow extends mv_id_vcard
 	}
 	protected static function format_image_url($sprintf_url,$genderId,$raceId,$classId,$level)
 	{
-		return sprintf($sprintf_url,(($level == 80) ? '80' : 'default'),$genderId,$raceId,$classId);
+		$level_blurb = '-default';
+		if($level >= 80)
+		{
+			$level_blurb = '-80';
+		}
+		else if($level >= 70)
+		{
+			$level_blurb = '-70';
+		}
+		else if($level >= 60)
+		{
+			$level_blurb = '';
+		}
+		return sprintf($sprintf_url,$level_blurb,$genderId,$raceId,$classId);
 	}
 	public static function affiliations_label()
 	{
@@ -47,13 +60,16 @@ abstract class mv_id_vcard_wow extends mv_id_vcard
 	}
 	protected static function scrape($url,$last_mod=false)
 	{
-		$curl_opts = array('user-agent' => 'This Is Not Firefox/3.0.10');
+		$curl_opts = array('user-agent' => 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.1.1) Gecko/20090715 Firefox/3.5.1');
 		if($last_mod !== false)
 		{
 			$curl_opts['headers'] = array(
 				'If-Modified-Since'=>$last_mod,
 			);
 		}
+		$curl_opts['headers'][CURLOPT_HTTPHEADER] = array(
+			'Accept:text/xml'
+		);
 		$data = mv_id_plugin::curl(
 			$url,
 			$curl_opts
@@ -130,7 +146,7 @@ class mv_id_vcard_wow_eu extends mv_id_vcard_wow
 			if(is_array($data))
 			{
 				list($name,$description,$genderId,$raceId,$classId,$level,$url) = $data;
-				$image = self::format_image_url('http://eu.wowarmory.com/images/portraits/wow-%s/%u-%u-%u.gif',$genderId,$raceId,$classId,$level);
+				$image = self::format_image_url('http://eu.wowarmory.com/images/portraits/wow%s/%u-%u-%u.gif',$genderId,$raceId,$classId,$level);
 				$stats = isset($data[7]) ? $data[7] : null;
 				$guild = isset($data[8]) ? array($data[8]) : null;
 				$skills = isset($data[9]) && is_array($data[9]) ? $data[9] : null;
@@ -166,7 +182,7 @@ class mv_id_vcard_wow_us extends mv_id_vcard_wow
 			if(is_array($data))
 			{
 				list($name,$description,$genderId,$raceId,$classId,$level,$url) = $data;
-				$image = self::format_image_url('http://www.wowarmory.com/images/portraits/wow-%s/%u-%u-%u.gif',$genderId,$raceId,$classId,$level);
+				$image = self::format_image_url('http://www.wowarmory.com/images/portraits/wow%s/%u-%u-%u.gif',$genderId,$raceId,$classId,$level);
 				$stats = isset($data[7]) ? $data[7] : null;
 				$guild = isset($data[8]) ? array($data[8]) : null;
 				$skills = isset($data[9]) && is_array($data[9]) ? $data[9] : null;

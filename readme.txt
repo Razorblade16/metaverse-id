@@ -2,8 +2,8 @@
 Contributors: signpostmarv
 Tags: mv-id, MV-ID, Metaverse, ID, hCard, vCard, hResume, hCalendar, vEvent, iCal, identity, profile, SL, Second Life, WoW, World of Warcraft, LotRO, Metaplace, EVE, EVE Online, Progress Quest
 Requires at least: 2.8
-Tested up to: 2.8
-Stable tag: 0.11.0
+Tested up to: 2.8.2
+Stable tag: 0.12
 
 Display your identity from around the metaverse!
 
@@ -53,6 +53,12 @@ To-do
 --------------------
 * Give admin-level users ability to delete/update all IDs.
 * Add generic hCard/hResume parser
+
+0.12.0
+--------------------
+* Added an option to switch between the WordPress HTTP API and the custom one used in previous versions of MV-ID.
+* Fixed a bug with parsing the WoW Armory.
+* Fixed a bug that caused the incorrect character image to be displayed.
 
 0.11.0
 --------------------
