@@ -1050,7 +1050,12 @@ class mv_id_plugin_widgets
 					{
 						echo '</a>';
 					}
-					echo '</span></li>',"\n";
+					echo '</span>';
+					if($affiliation->img() !== null && $affiliation->img() !== false)
+					{
+						echo '<br /><img class="photo" src="',$affiliation->img(),'" />';
+					}
+					echo '</li>',"\n";
 				}
 			echo str_repeat("\t",6),'</ul>',"\n";
 		}

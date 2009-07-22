@@ -59,6 +59,7 @@ To-do
 * Added an option to switch between the WordPress HTTP API and the custom one used in previous versions of MV-ID.
 * Fixed a bug with parsing the WoW Armory.
 * Fixed a bug that caused the incorrect character image to be displayed.
+* Added display support for guild/group insignias.
 
 0.11.0
 --------------------
