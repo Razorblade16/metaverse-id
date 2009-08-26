@@ -2,8 +2,8 @@
 Contributors: signpostmarv
 Tags: mv-id, MV-ID, Metaverse, ID, hCard, vCard, hResume, hCalendar, vEvent, iCal, identity, profile, SL, Second Life, WoW, World of Warcraft, LotRO, Metaplace, EVE, EVE Online, Progress Quest
 Requires at least: 2.8
-Tested up to: 2.8.2
-Stable tag: 0.12
+Tested up to: 2.8.4
+Stable tag: 0.13
 
 Display your identity from around the metaverse!
 
@@ -13,6 +13,7 @@ Display your identity from around the metaverse!
 
 Supported Metaverses
 --------------------
+* Champions Online
 * EVE Online
 * Free Realms
 * Lord of the Rings Online
@@ -29,6 +30,7 @@ If you try to update a Metaverse ID and you repeatedly get a message to the effe
 
 == Installation ==
 
+1. Ensure your server is using PHP5, this plugin does not support PHP4.
 1. Upload the `metaverse-id` directory to the `/wp-content/plugins/` directory
 1. Activate the plugin through the 'Plugins' menu in WordPress
 
@@ -43,7 +45,7 @@ If you try to update a Metaverse ID and you repeatedly get a message to the effe
 == Requirements ==
 
 * PHP5 (I'm using features not present in PHP4, WordPress runs fine on PHP5, so upgrade already!)
-* DOMDocument (required for Second Life, LOTRO)
+* DOMDocument (required for Second Life, LOTRO, Champions Online)
 * SimpleXML (required for WoW, Metaplace, EVE)
 * JSON decode support (required for Free Realms)
 
@@ -53,6 +55,11 @@ To-do
 --------------------
 * Give admin-level users ability to delete/update all IDs.
 * Add generic hCard/hResume parser
+
+0.13.0
+--------------------
+* Added support for problem reporting.
+* Added support for Champions Online
 
 0.12.0
 --------------------

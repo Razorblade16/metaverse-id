@@ -1,11 +1,11 @@
 <?php
 /*
 Plugin Name: MV ID::Progress Quest
-Plugin URI: http://blog.signpostmarv.name/mv-id/
-Description: Display your Progress Quest Identity. Requires <a href="http://blog.signpostmarv.name/mv-id/">Metaverse ID</a>.
+Plugin URI: http://signpostmarv.name/mv-id/
+Description: Display your Progress Quest Identity. Requires <a href="http://signpostmarv.name/mv-id/">Metaverse ID</a>.
 Version: 1.0
 Author: SignpostMarv Martin
-Author URI: http://blog.signpostmarv.name/
+Author URI: http://signpostmarv.name/
  Copyright 2009 SignpostMarv Martin  (email : mv-id.wp@signpostmarv.name)
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -108,7 +108,7 @@ class mv_id_vcard_pq extends mv_id_vcard
 							$primeStat = 'Charisma';
 						break;
 					}
-					$skills = array(new mv_id_skill($primeStat,(int)$primeStatValue));
+					$stats = new mv_id_stats(array(new mv_id_stat($primeStat,(int)$primeStatValue)));
 					$description = sprintf(self::sprintf_description,$name,$realm,$level,$race,$class,$plotStage,$speciality);
 					if($xpath->item(8)->nextSibling->attributes->getNamedItem('class')->nodeValue === 'sel' && $xpath->item(8)->nextSibling->nodeValue !== '')
 					{
@@ -133,7 +133,7 @@ class mv_id_vcard_pq extends mv_id_vcard
 				{
 					return false;
 				}
-				return new self(sprintf('%s_of_%s',$name,$realm),$name,null,$description,$url,null,$guild ? array($guild) : null,$skills);
+				return new self(sprintf('%s_of_%s',$name,$realm),$name,null,$description,$url,$stats,$guild ? array($guild) : null);
 			}
 			else
 			{

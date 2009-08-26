@@ -1,11 +1,11 @@
 <?php
 /*
 Plugin Name: MV ID::Free Realms
-Plugin URI: http://blog.signpostmarv.name/mv-id/
-Description: Display your Free Realms Identity. Requires <a href="http://blog.signpostmarv.name/mv-id/">Metaverse ID</a>.
+Plugin URI: http://signpostmarv.name/mv-id/
+Description: Display your Free Realms Identity. Requires <a href="http://signpostmarv.name/mv-id/">Metaverse ID</a>.
 Version: 1.0
 Author: SignpostMarv Martin
-Author URI: http://blog.signpostmarv.name/
+Author URI: http://signpostmarv.name/
  Copyright 2009 SignpostMarv Martin  (email : mv-id.wp@signpostmarv.name)
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

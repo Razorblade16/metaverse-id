@@ -3,7 +3,7 @@
 Plugin Name: Metaverse ID
 Plugin URI: http://signpostmarv.name/mv-id/
 Description: Display your identity from around the metaverse!
-Version: 0.12
+Version: 0.13
 Author: SignpostMarv Martin
 Author URI: http://signpostmarv.name/
  Copyright 2009 SignpostMarv Martin  (email : mv-id.wp@signpostmarv.name)
@@ -27,6 +27,11 @@ class mv_id_plugin
 {
 	protected static $metaverse_classes = array();
 	protected static $supported_mvs = array();
+	protected static $problems = array();
+	public static function report_problem($problem)
+	{
+		self::$problems[] = $problem;
+	}
 	public static function DOMDocument($data)
 	{
 		$doc = new DOMDocument;
@@ -711,13 +716,27 @@ mv_id_plugin = {
 		$mv_ids = self::get_all_mv_ids_and_cache();
 ?>
 	<h2>Your Metaverse IDs</h2>
-<?php	
+<?php
 	if(count(self::registered_metaverses()) < 1)
 	{
 ?>
 		<p>There are no Metaverses available to use.</p>
 <?php
 		return;
+	}
+	else if(empty(self::$problems) === false)
+	{
+?>
+		<div><h3>Problems with MV-ID</h3>
+		<ol class="mv-id problems"><?php
+		foreach(self::$problems as $problem)
+		{
+?>
+			<li><?php echo htmlentities2((string)$problem); ?></li><?php
+		}
+?>
+		</ol></div>
+<?php
 	}
 ?>
 	<form action="<?php echo str_replace( '%7E', '~', $_SERVER['REQUEST_URI']); ?>" method="post">
@@ -1006,12 +1025,28 @@ class mv_id_plugin_widgets
 		{
 			echo str_repeat("\t",6),'<p class="summary">',str_replace("\n","<br />\n",apply_filters('mv_id_linkify',htmlentities2($vcard->description()),null,array('me'))),'</p>',"\n";
 		}
+		if($vcard->stats() instanceof mv_id_stats)
+		{
+			echo str_repeat("\t",6),'<ul>',"\n";
+			foreach($vcard->stats()->stats() as $stat)
+			{
+				if($stat->name() === 'bday')
+				{
+					continue;
+				}
+				else
+				{
+					echo str_repeat("\t",7),'<li class="stat"><span class="type">',htmlentities2($stat->name()),'</span>',': <span class="value">',htmlentities2($stat->value()),'</span></li>',"\n";
+				}
+			}
+			echo str_repeat("\t",6),'</ul>',"\n";
+		}
 		if(is_array($vcard->skills()))
 		{
 			echo str_repeat("\t",6),'<ul>',"\n";
 			foreach($vcard->skills() as $skill)
 			{
-				echo str_repeat("\t",6),'<li>',"\n";
+				echo str_repeat("\t",7),'<li>',"\n";
 				if(is_string($skill->url()))
 				{
 					echo '<a class="skill" rel="tag" href="',$skill->url(),'">';
@@ -1117,6 +1152,7 @@ require_once('metaverses/metaplace.php');
 require_once('metaverses/lotro.php');
 require_once('metaverses/eve.php');
 require_once('metaverses/pq.php');
+require_once('metaverses/champions-online.php');
 register_activation_hook(__FILE__,'mv_id_plugin::activate');
 register_deactivation_hook(__FILE__,'mv_id_plugin::deactivate');
 add_action('widgets_init', create_function('', 'return register_widget("mv_id_plugin_widget");'));
