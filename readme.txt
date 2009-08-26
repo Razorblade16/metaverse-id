@@ -56,7 +56,7 @@ To-do
 * Give admin-level users ability to delete/update all IDs.
 * Add generic hCard/hResume parser
 
-0.13.0
+0.13.1
 --------------------
 * Fixed bug with Champions Online character biographies.
 
