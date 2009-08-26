@@ -136,7 +136,7 @@ class mv_id_vcard_champions extends mv_id_vcard
 			{
 				$desc = trim($xpath->item(0)->nodeValue);
 				$desc = str_replace("\n\n","\r",$desc);
-				$desc = str_replace("\n",'',$desc);
+				$desc = str_replace("\n",' ',$desc);
 				$desc = str_replace("\r","\n\n",$desc);
 				if($desc == '')
 				{

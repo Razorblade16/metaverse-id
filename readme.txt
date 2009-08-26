@@ -3,7 +3,7 @@ Contributors: signpostmarv
 Tags: mv-id, MV-ID, Metaverse, ID, hCard, vCard, hResume, hCalendar, vEvent, iCal, identity, profile, SL, Second Life, WoW, World of Warcraft, LotRO, Metaplace, EVE, EVE Online, Progress Quest
 Requires at least: 2.8
 Tested up to: 2.8.4
-Stable tag: 0.13
+Stable tag: 0.13.1
 
 Display your identity from around the metaverse!
 
@@ -58,8 +58,14 @@ To-do
 
 0.13.0
 --------------------
+* Fixed bug with Champions Online character biographies.
+
+0.13.0
+--------------------
 * Added support for problem reporting.
-* Added support for Champions Online
+* Added support for Champions Online.
+* Changed "Progress Quest" skill to stat.
+* Added support for displaying stats.
 
 0.12.0
 --------------------
