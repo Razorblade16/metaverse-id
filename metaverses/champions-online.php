@@ -3,7 +3,7 @@
 Plugin Name: MV ID::Champions Online
 Plugin URI: http://signpostmarv.name/mv-id/
 Description: Display your Champions Online Identity. Requires <a href="http://signpostmarv.name/mv-id/">Metaverse ID</a>.
-Version: 1.0
+Version: 1.1
 Author: SignpostMarv Martin
 Author URI: http://signpostmarv.name/
  Copyright 2009 SignpostMarv Martin  (email : mv-id.wp@signpostmarv.name)
@@ -33,7 +33,7 @@ class mv_id_vcard_champions extends mv_id_vcard
 	
 	const sprintf_url = 'http://champions-online.com/character_profiles/%1$u';
 	const sprintf_url_bio  = 'http://champions-online.com/character_profiles/%1$u/biography';
-	const sprintf_url_img  = 'http://champions-online.com/dyncontent/fightclub/gic/headshot/%1$u_imgWidth-1024_imgHeight-1024_jpgTexName-%2$s';
+	const sprintf_url_img  = 'http://champions-online.com/%2$s';
 	
 	const xpath_get_name   = '//div[@id="profile_champ"]/div[@class="name"]';
 	const xpath_get_level  = '//div[@id="profile_level_num"]/div';

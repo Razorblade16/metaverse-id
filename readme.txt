@@ -3,7 +3,7 @@ Contributors: signpostmarv
 Tags: mv-id, MV-ID, Metaverse, ID, hCard, vCard, hResume, hCalendar, vEvent, iCal, identity, profile, SL, Second Life, WoW, World of Warcraft, LotRO, Metaplace, EVE, EVE Online, Progress Quest
 Requires at least: 2.8
 Tested up to: 2.8.4
-Stable tag: 0.13.1
+Stable tag: 0.13.2
 
 Display your identity from around the metaverse!
 
@@ -41,6 +41,7 @@ If you try to update a Metaverse ID and you repeatedly get a message to the effe
 3. Profiles haven't been cached yet! Better force an update to get the profiles cached.
 4. Freshly cached profiles. Ticking the box in the `Update` column can be used to force an update of the profile cache.
 5. Individual widgets for each ID!
+6. How the widgets look in the default WP theme.
 
 == Requirements ==
 
@@ -55,6 +56,10 @@ To-do
 --------------------
 * Give admin-level users ability to delete/update all IDs.
 * Add generic hCard/hResume parser
+
+0.13.2
+--------------------
+* Fixed bug with Champions Online character images.
 
 0.13.1
 --------------------
