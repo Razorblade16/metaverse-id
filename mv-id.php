@@ -3,7 +3,7 @@
 Plugin Name: Metaverse ID
 Plugin URI: http://signpostmarv.name/mv-id/
 Description: Display your identity from around the metaverse!
-Version: 0.13.2
+Version: 0.14.1
 Author: SignpostMarv Martin
 Author URI: http://signpostmarv.name/
  Copyright 2009 SignpostMarv Martin  (email : mv-id.wp@signpostmarv.name)
@@ -25,6 +25,7 @@ require_once('abstracts.php');
 require_once('linkify.php');
 class mv_id_plugin
 {
+	const shortcode = 'mv-id';
 	protected static $metaverse_classes = array();
 	protected static $supported_mvs = array();
 	protected static $problems = array();
@@ -232,12 +233,10 @@ class mv_id_plugin
 	}
 	public static function db_tablename()
 	{
-		global $wpdb;
-		return $wpdb->prefix . 'mv_id';
+		return self::wpdb()->prefix . 'mv_id';
 	}
 	protected static function install()
 	{
-		global $wpdb;
 		$structure = 'CREATE TABLE IF NOT EXISTS ' . self::db_tablename() . ' (
 `user_id` BIGINT( 20 ) UNSIGNED NOT NULL DEFAULT "1",
 `metaverse` CHAR( 32 ) NOT NULL ,
@@ -246,15 +245,14 @@ class mv_id_plugin
 `cache` BLOB NULL DEFAULT NULL ,
 PRIMARY KEY ( `user_id`,`metaverse` , `id` )
 )';
-		$wpdb->query($structure);
+		self::wpdb()->query($structure);
 		self::upgrade();
 	}
 	protected static function upgrade()
 	{
-		global $wpdb;
 		$alter_sql = 'ALTER TABLE ' . self::db_tablename() . ' ADD `user_id` BIGINT( 20 ) UNSIGNED NOT NULL DEFAULT "1" FIRST, DROP PRIMARY KEY, ADD PRIMARY KEY ( `user_id`, `metaverse`, `id`)';
 		$check_sql = 'SHOW COLUMNS FROM ' . self::db_tablename();
-		$schema = $wpdb->get_results($check_sql);
+		$schema = self::wpdb()->get_results($check_sql);
 		if(empty($schema) === false)
 		{
 			$fields = array();
@@ -265,15 +263,14 @@ PRIMARY KEY ( `user_id`,`metaverse` , `id` )
 			unset($schema);
 			if(in_array('user_id',$fields) === false)
 			{
-				$wpdb->query($alter_sql);
+				self::wpdb()->query($alter_sql);
 			}
 			unset($fields);
 		}
 	}
 	protected static function uninstall()
 	{
-		global $wpdb;
-		$wpdb->query('DROP TABLE IF EXISTS ' . self::db_tablename());
+		self::wpdb()->query('DROP TABLE IF EXISTS ' . self::db_tablename());
 	}
 	public static function activate()
 	{
@@ -284,20 +281,21 @@ PRIMARY KEY ( `user_id`,`metaverse` , `id` )
 	{
 		self::uninstall();
 		wp_clear_scheduled_hook('mv_id_plugin__regenerate_cache');
+		remove_shortcode(self::shortcode);
 	}
 	public static function register_metaverses()
 	{
 		do_action('mv_id_plugin__register_metaverses');
+		add_shortcode(self::shortcode,'mv_id_plugin::shortcode');
 	}
 	public static function delete_user($user_ID)
 	{
-		global $wpdb;
 		static $delete_sql;
 		if(isset($delete_sql) === false)
 		{
 			$delete_sql = 'DELETE FROM ' . self::db_tablename() . ' WHERE user_id = %s';
 		}
-		$wpdb->query($wpdb->prepare($delete_sql,$user_ID));
+		self::wpdb()->query(self::wpdb()->prepare($delete_sql,$user_ID));
 	}
 	public static function profile_update($user_ID)
 	{
@@ -309,7 +307,6 @@ PRIMARY KEY ( `user_id`,`metaverse` , `id` )
 	}
 	public static function cron()
 	{
-		global $wpdb;
 		$mv_ids = self::get_all_mv_ids(true);
 		if(isset($mv_ids) && is_array($mv_ids) && count($mv_ids) > 0)
 		{
@@ -338,8 +335,7 @@ PRIMARY KEY ( `user_id`,`metaverse` , `id` )
 	}
 	public static function table_exists()
 	{
-		global $wpdb;
-		$tables = $wpdb->get_results($wpdb->prepare('SHOW TABLES LIKE %s',self::db_tablename()),ARRAY_N);
+		$tables = self::wpdb()->get_results(self::wpdb()->prepare('SHOW TABLES LIKE %s',self::db_tablename()),ARRAY_N);
 		if(empty($tables) === false)
 		{
 			foreach($tables as $table)
@@ -355,7 +351,6 @@ PRIMARY KEY ( `user_id`,`metaverse` , `id` )
 	}
 	public static function delete($metaverse,$id)
 	{
-		global $wpdb;
 		global $user_ID;
 		get_currentuserinfo();
 		static $delete_sql;
@@ -363,7 +358,7 @@ PRIMARY KEY ( `user_id`,`metaverse` , `id` )
 		{
 			$delete_sql = 'DELETE FROM ' . self::db_tablename() . ' WHERE user_ID = %s AND metaverse = %s AND id = %s';
 		}
-		$wpdb->query($wpdb->prepare($delete_sql,$user_ID,$metaverse,$id));
+		self::wpdb()->query(self::wpdb()->prepare($delete_sql,$user_ID,$metaverse,$id));
 	}
 	public static function add($metaverse,$id)
 	{
@@ -372,7 +367,6 @@ PRIMARY KEY ( `user_id`,`metaverse` , `id` )
 		get_currentuserinfo();
 		if(self::nice_name($metaverse) !== false && self::is_id_valid($metaverse,$id) === true && $user_ID !== '' && $user_level >= 1)
 		{
-			global $wpdb;
 			static $add_sql;
 			if(isset($add_sql) === false)
 			{
@@ -381,7 +375,7 @@ PRIMARY KEY ( `user_id`,`metaverse` , `id` )
 ON DUPLICATE KEY UPDATE
 	cache=NULL';
 			}
-			$wpdb->query($wpdb->prepare($add_sql,$user_ID,$metaverse,$id));
+			self::wpdb()->query(self::wpdb()->prepare($add_sql,$user_ID,$metaverse,$id));
 		}
 	}
 	public static function cache($metaverse,$id,mv_id_vcard $vcard) // do not call before add
@@ -389,13 +383,12 @@ ON DUPLICATE KEY UPDATE
 		global $user_ID;
 		if(self::nice_name($metaverse) !== false && self::is_id_valid($metaverse,$id) === true)
 		{
-			global $wpdb;
 			static $cache_sql;
 			if(isset($cache_sql) === false)
 			{
 				$cache_sql = 'UPDATE ' . self::db_tablename() . ' SET cache = %s,last_mod=NOW() WHERE metaverse = %s AND id = %s';
 			}
-			return $wpdb->query($wpdb->prepare($cache_sql,serialize($vcard),$metaverse,$id));
+			return self::wpdb()->query(self::wpdb()->prepare($cache_sql,serialize($vcard),$metaverse,$id));
 		}
 		else
 		{
@@ -404,13 +397,12 @@ ON DUPLICATE KEY UPDATE
 	}
 	public static function get($metaverse,$id)
 	{
-		global $wpdb;
 		static $get_sql;
 		if(isset($get_sql) === false)
 		{
 			$get_sql = 'SELECT cache FROM ' . self::db_tablename() . ' WHERE metaverse=%s AND id=%s AND cache IS NOT NULL LIMIT 1';
 		}
-		$cache = $wpdb->get_var($wpdb->prepare($get_sql,$metaverse,$id));
+		$cache = self::wpdb()->get_var(self::wpdb()->prepare($get_sql,$metaverse,$id));
 		if(empty($cache) === false)
 		{
 			return unserialize($cache);
@@ -419,6 +411,35 @@ ON DUPLICATE KEY UPDATE
 		{
 			return false;
 		}
+	}
+	public static function get_all($metaverse)
+	{
+		static $get_sql;
+		if(isset($get_sql) === false)
+		{
+			$get_sql = 'SELECT cache FROM ' . self::db_tablename() . ' WHERE metaverse=%s AND cache IS NOT NULL';
+		}
+		$cache = self::wpdb()->get_results(self::wpdb()->prepare($get_sql,$metaverse),ARRAY_N);
+		if(is_array($cache) === false)
+		{
+			return array();
+		}
+		foreach($cache as $k=>$v)
+		{
+			if(empty($v) === false)
+			{
+				$cache[$k] = unserialize($v[0]);
+				if(($cache[$k] instanceof mv_id_vcard_widget) === false)
+				{
+					unset($cache[$k]);
+				}
+			}
+			else
+			{
+				unset($cache[$k]);
+			}
+		}
+		return $cache;
 	}
 	public static function get_mv_id_last_mod($metaverse,$id,$force=false)
 	{
@@ -439,7 +460,6 @@ ON DUPLICATE KEY UPDATE
 	}
 	public static function get_all_mv_ids($force=false)
 	{
-		global $wpdb;
 		static $get_sql;
 		static $mv_ids;
 		if(isset($get_sql) === false)
@@ -448,13 +468,12 @@ ON DUPLICATE KEY UPDATE
 		}
 		if(empty($mv_ids) || $force == true)
 		{
-			$mv_ids = $wpdb->get_results($get_sql);
+			$mv_ids = self::wpdb()->get_results($get_sql);
 		}
 		return $mv_ids;
 	}
 	public static function get_all_mv_ids_and_cache($force=false)
 	{
-		global $wpdb;
 		global $user_ID;
 		get_currentuserinfo();
 		static $get_sql;
@@ -468,11 +487,11 @@ ON DUPLICATE KEY UPDATE
 		{
 			if($user_ID === '')
 			{
-				$mv_ids[$user_ID] = $wpdb->get_results($get_sql);
+				$mv_ids[$user_ID] = self::wpdb()->get_results($get_sql);
 			}
 			else
 			{
-				$mv_ids[$user_ID] = $wpdb->get_results($wpdb->prepare($get_sql . $user_sql,$user_ID));
+				$mv_ids[$user_ID] = self::wpdb()->get_results(self::wpdb()->prepare($get_sql . $user_sql,$user_ID));
 			}
 			foreach($mv_ids[$user_ID] as $k=>$v)
 			{
@@ -486,7 +505,6 @@ ON DUPLICATE KEY UPDATE
 	}
 	public static function get_uncached_mv_ids($force=false,$all_users=false)
 	{
-		global $wpdb;
 		static $mv_ids = array();
 		static $get_sql;
 		$_zomg_user_ID = '';
@@ -505,11 +523,11 @@ ON DUPLICATE KEY UPDATE
 		{
 			if($_zomg_user_ID === '' || $all_users === true)
 			{
-				$mv_ids[$_zomg_user_ID] = $wpdb->get_results($get_sql);
+				$mv_ids[$_zomg_user_ID] = self::wpdb()->get_results($get_sql);
 			}
 			else
 			{
-				$mv_ids[$_zomg_user_ID] = $wpdb->get_results($wpdb->prepare($get_sql . $user_sql,$_zomg_user_ID));
+				$mv_ids[$_zomg_user_ID] = self::wpdb()->get_results(self::wpdb()->prepare($get_sql . $user_sql,$_zomg_user_ID));
 			}
 		}
 		return $mv_ids[$_zomg_user_ID];
@@ -583,6 +601,53 @@ ON DUPLICATE KEY UPDATE
 			$links[] = $settings_link;
 		}
 		return $links;
+	}
+	public static function shortcode($atts)
+	{
+		extract(shortcode_atts(array(
+			'mv' => '',
+			'id' => '',
+			'h'=>'',
+		),$atts));
+		$h = strtolower($h);
+		if(is_numeric($h))
+		{
+			$h = (integer)$h;
+			if($h <= 0 || $h > 6)
+			{
+				$h = false;
+			}
+		}
+		if($id !== '')
+		{
+			$vcards = array(mv_id_plugin::get($mv,$id));
+		}
+		else
+		{
+			$vcards = mv_id_plugin::get_all($mv);
+		}
+		foreach($vcards as $k=>$vcard)
+		{
+			if(($vcard instanceof mv_id_vcard_widget) === false)
+			{
+				unset($vcards[$k]);
+			}
+		}
+		if(empty($vcards))
+		{
+			return;
+		}
+		else
+		{
+			if($h)
+			{
+				echo '<h',$h,'>',htmlentities2(self::nice_name($mv)),'</h',$h,'>',"\n";
+			}
+			foreach($vcards as $vcard)
+			{
+				mv_id_plugin_widgets::output($vcard);
+			}
+		}
 	}
 	public static function javascript()
 	{
@@ -761,9 +826,9 @@ mv_id_plugin = {
 					$vcard = $id->cache;
 ?>
 			<tr>
-				<td><input type="checkbox" name="delete[]" value="<?php echo $id->metaverse,'::',$id->id; ?>" title="Delete '<?php echo $id->id; ?>' ?" /></td>
-				<td><input type="checkbox" name="update[]" value="<?php echo $id->metaverse,'::',$id->id; ?>" title="Update '<?php echo $id->id; ?>' ?" <?php if($vcard === NULL){ ?>checked="checked"<?php } ?> /></td>
-				<td><?php echo self::nice_name($id->metaverse); ?><br /><strong><?php echo $id->id; ?></strong></td>
+				<td><input type="checkbox" name="delete[]" value="<?php echo esc_attr($id->metaverse),'::',esc_attr($id->id); ?>" title="Delete '<?php echo $id->id; ?>' ?" /></td>
+				<td><input type="checkbox" name="update[]" value="<?php echo esc_attr($id->metaverse),'::',esc_attr($id->id); ?>" title="Update '<?php echo $id->id; ?>' ?" <?php if($vcard === NULL){ ?>checked="checked"<?php } ?> /></td>
+				<td><?php echo self::nice_name($id->metaverse); ?><br /><strong><?php echo $id->id; ?></strong><br />Shortcode:<code>[<?php echo htmlentities2(mv_id_plugin::shortcode);?> mv='<?php echo esc_attr($id->metaverse) ?>' id='<?php echo esc_attr($id->id); ?>']</code></td>
 				<td><?php
 				if($vcard instanceof mv_id_vcard_widget)
 				{
@@ -976,10 +1041,10 @@ class mv_id_plugin_widgets
 			return array();
 		}
 		static $metaverses;
+		global $wpdb;
 		if(isset($metaverses) === false)
 		{
 			$metaverses = array();
-			global $wpdb;
 			$get_sql = 'SELECT DISTINCT metaverse FROM ' . mv_id_plugin::db_tablename() . ' WHERE cache IS NOT NULL';
 			$_metaverses = $wpdb->get_results($get_sql);
 			foreach($_metaverses as $metaverse)

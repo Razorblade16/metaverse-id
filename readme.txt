@@ -3,7 +3,7 @@ Contributors: signpostmarv
 Tags: mv-id, MV-ID, Metaverse, ID, hCard, vCard, hResume, hCalendar, vEvent, iCal, identity, profile, SL, Second Life, WoW, World of Warcraft, LotRO, Metaplace, EVE, EVE Online, Progress Quest
 Requires at least: 2.8
 Tested up to: 2.8.4
-Stable tag: 0.13.2
+Stable tag: 0.14.1
 
 Display your identity from around the metaverse!
 
@@ -39,9 +39,11 @@ If you try to update a Metaverse ID and you repeatedly get a message to the effe
 1. The `Metaverse ID` plugin page before any profiles have been added.
 2. Adding multiple profiles in one go.
 3. Profiles haven't been cached yet! Better force an update to get the profiles cached.
-4. Freshly cached profiles. Ticking the box in the `Update` column can be used to force an update of the profile cache.
+4. Freshly cached profiles. Ticking the box in the `Update` column can be used to force an update of the profile cache. Shortcodes for each profile are displayed.
 5. Individual widgets for each ID!
 6. How the widgets look in the default WP theme.
+7. By ommitting the id parameter in the mv-id shortcode, the plugin will attempt to display all cached IDs.
+8. With the h parameter set to a number between 1 and 6, the shortcode output will include the name of the metaverse wrapped in the appropriate HTML tag.
 
 == Requirements ==
 
@@ -56,6 +58,11 @@ To-do
 --------------------
 * Give admin-level users ability to delete/update all IDs.
 * Add generic hCard/hResume parser
+
+0.14.1
+--------------------
+* Added shortcode support
+* Added shortcode parameter to display metaverse name as html h1-6 tag.
 
 0.13.2
 --------------------
