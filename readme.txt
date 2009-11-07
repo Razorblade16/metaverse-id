@@ -1,9 +1,9 @@
 === Metaverse ID ===
 Contributors: signpostmarv
-Tags: mv-id, MV-ID, Metaverse, ID, hCard, vCard, hResume, hCalendar, vEvent, iCal, identity, profile, SL, Second Life, WoW, World of Warcraft, LotRO, Metaplace, EVE, EVE Online, Progress Quest
+Tags: mv-id, MV-ID, Metaverse, ID, hCard, vCard, hResume, hCalendar, vEvent, iCal, identity, profile, SL, Second Life, WoW, World of Warcraft, LotRO, Metaplace, EVE, EVE Online, Progress Quest, EverQuest, EQ, EverQuest II, EQ2
 Requires at least: 2.8
-Tested up to: 2.8.4
-Stable tag: 0.14.1
+Tested up to: 2.8.5
+Stable tag: 0.15.0
 
 Display your identity from around the metaverse!
 
@@ -21,6 +21,7 @@ Supported Metaverses
 * Progress Quest
 * Second Life (Agni/Main Grid, Teen Second Life)
 * World of Warcraft (Europe, US)
+* Everquest, Everquest II
 
 Metaverse Configuration
 --------------------
@@ -59,10 +60,18 @@ To-do
 * Give admin-level users ability to delete/update all IDs.
 * Add generic hCard/hResume parser
 
+0.15.0
+--------------------
+* Added Everquest & Everquest II support.
+
 0.14.1
 --------------------
-* Added shortcode support
 * Added shortcode parameter to display metaverse name as html h1-6 tag.
+
+0.14.0
+--------------------
+* Added shortcode support
+* Switched all instances of "global $wpdb" inside the mv_id_plugin class to use mv_id_plugin::wpdb() static method.
 
 0.13.2
 --------------------
