@@ -2,8 +2,8 @@
 Contributors: signpostmarv
 Tags: mv-id, MV-ID, Metaverse, ID, hCard, vCard, hResume, hCalendar, vEvent, iCal, identity, profile, SL, Second Life, WoW, World of Warcraft, LotRO, Metaplace, EVE, EVE Online, Progress Quest, EverQuest, EQ, EverQuest II, EQ2
 Requires at least: 2.8
-Tested up to: 2.8.5
-Stable tag: 0.15.0
+Tested up to: 2.8.6
+Stable tag: 0.15.1
 
 Display your identity from around the metaverse!
 
@@ -53,16 +53,20 @@ If you try to update a Metaverse ID and you repeatedly get a message to the effe
 * SimpleXML (required for WoW, Metaplace, EVE)
 * JSON decode support (required for Free Realms)
 
-== Changes ==
+== ChangeLog ==
 
 To-do
 --------------------
 * Give admin-level users ability to delete/update all IDs.
 * Add generic hCard/hResume parser
 
+0.15.1
+--------------------
+* Fixed bug with shortcode output
+
 0.15.0
 --------------------
-* Added Everquest & Everquest II support.
+* Added EverQuest & EverQuest II support.
 
 0.14.1
 --------------------

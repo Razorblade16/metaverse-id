@@ -3,7 +3,7 @@
 Plugin Name: Metaverse ID
 Plugin URI: http://signpostmarv.name/mv-id/
 Description: Display your identity from around the metaverse!
-Version: 0.15.0
+Version: 0.15.1
 Author: SignpostMarv Martin
 Author URI: http://signpostmarv.name/
  Copyright 2009 SignpostMarv Martin  (email : mv-id.wp@signpostmarv.name)
@@ -639,14 +639,16 @@ ON DUPLICATE KEY UPDATE
 		}
 		else
 		{
+			$doc = '';
 			if($h)
 			{
-				echo '<h',$h,'>',htmlentities2(self::nice_name($mv)),'</h',$h,'>',"\n";
+				$doc .= sprintf('<h%1$u>%2$s</h%1$u>',$h,htmlentities2(self::nice_name($mv))) . "\n";
 			}
 			foreach($vcards as $vcard)
 			{
-				mv_id_plugin_widgets::output($vcard);
+				$doc .= mv_id_plugin_widgets::build($vcard);
 			}
+			return $doc;
 		}
 	}
 	public static function javascript()
@@ -1066,7 +1068,7 @@ class mv_id_plugin_widgets
 			}
 		}
 	}
-	public static function output(mv_id_vcard $vcard)
+	public static function build(mv_id_vcard $vcard)
 	{
 		ob_start();
 		echo
@@ -1162,7 +1164,11 @@ class mv_id_plugin_widgets
 		echo str_repeat("\t",5),'</div>',"\n";
 		$hresume = ob_get_contents();
 		ob_end_clean();
-		echo apply_filters('post_output_mv_id_vcard',$hresume,$vcard);
+		return apply_filters('post_output_mv_id_vcard',$hresume,$vcard);
+	}
+	public static function output(mv_id_vcard $vcard)
+	{
+		echo self::build($vcard);
 	}
 }
 class mv_id_plugin_widget extends WP_Widget {
