@@ -3,7 +3,7 @@
 Plugin Name: Metaverse ID
 Plugin URI: http://signpostmarv.name/mv-id/
 Description: Display your identity from around the metaverse!
-Version: 0.15.1
+Version: 1.0.1
 Author: SignpostMarv Martin
 Author URI: http://signpostmarv.name/
  Copyright 2009 SignpostMarv Martin  (email : mv-id.wp@signpostmarv.name)
@@ -736,6 +736,10 @@ mv_id_plugin.nice_names = <?php echo json_encode($mv_id_nice_names);?>;
 			wp_enqueue_script('MV-ID');
 		}
 	}
+	public static function widgets_init()
+	{
+		return register_widget("mv_id_plugin_widget");
+	}
 	protected static function mv_id_trs($mv_ids)
 	{
 		if(count($mv_ids) > 0)
@@ -1194,7 +1198,7 @@ require_once('metaverses/eq.php');
 require_once('metaverses/eq2.php');
 register_activation_hook(__FILE__,'mv_id_plugin::activate');
 register_deactivation_hook(__FILE__,'mv_id_plugin::deactivate');
-add_action('widgets_init', create_function('', 'return register_widget("mv_id_plugin_widget");'));
+add_action('widgets_init', 'mv_id_plugin::widgets_init');
 add_action('mv_id_plugin__regenerate_cache','mv_id_plugin::cron');
 add_action('mv_id_plugin__output_vcard','mv_id_plugin_widgets::output');
 add_action('admin_menu','mv_id_plugin::admin_actions');
