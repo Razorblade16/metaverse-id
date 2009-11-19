@@ -3,7 +3,7 @@ Contributors: signpostmarv
 Tags: mv-id, MV-ID, Metaverse, ID, hCard, vCard, hResume, hCalendar, vEvent, iCal, identity, profile, SL, Second Life, WoW, World of Warcraft, LotRO, Metaplace, EVE, EVE Online, Progress Quest, EverQuest, EQ, EverQuest II, EQ2
 Requires at least: 2.8
 Tested up to: 2.8.6
-Stable tag: 0.15.1
+Stable tag: 1.0
 
 Display your identity from around the metaverse!
 
@@ -55,10 +55,11 @@ If you try to update a Metaverse ID and you repeatedly get a message to the effe
 
 == ChangeLog ==
 
-To-do
+1.0
 --------------------
-* Give admin-level users ability to delete/update all IDs.
-* Add generic hCard/hResume parser
+* Gave admin-level users ability to delete/update all IDs.
+* Decided to remove the hCard/hResume parser from the to-do list since the chances of an MMO developer having the sense to use hcard/hResume in the web profiles for player characters is slim to none.
+* Refactored & cleaned up some code.
 
 0.15.1
 --------------------

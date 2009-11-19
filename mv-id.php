@@ -29,9 +29,27 @@ class mv_id_plugin
 	protected static $metaverse_classes = array();
 	protected static $supported_mvs = array();
 	protected static $problems = array();
+	protected static $mv_ids = array();
 	public static function report_problem($problem)
 	{
 		self::$problems[] = $problem;
+	}
+	public static function show_problems()
+	{
+		if(empty(self::$problems) === false)
+		{
+?>
+		<div><h3>Problems with MV-ID</h3>
+		<ol class="mv-id problems"><?php
+			foreach(self::$problems as $problem)
+			{
+?>
+			<li><?php echo htmlentities2((string)$problem); ?></li><?php
+			}
+?>
+		</ol></div>
+<?php
+		}
 	}
 	public static function DOMDocument($data)
 	{
@@ -286,6 +304,8 @@ PRIMARY KEY ( `user_id`,`metaverse` , `id` )
 	public static function register_metaverses()
 	{
 		do_action('mv_id_plugin__register_metaverses');
+		wp_register_script('MV-ID',untrailingslashit(trailingslashit(trailingslashit( get_bloginfo('wpurl') ).PLUGINDIR.'/'. dirname( plugin_basename(__FILE__) )) . 'mv-id.js'),array('jquery'));
+		add_action('admin_print_scripts','mv_id_plugin::print_scripts');
 		add_shortcode(self::shortcode,'mv_id_plugin::shortcode');
 	}
 	public static function delete_user($user_ID)
@@ -478,30 +498,59 @@ ON DUPLICATE KEY UPDATE
 		get_currentuserinfo();
 		static $get_sql;
 		static $user_sql = ' WHERE user_id = %s';
-		static $mv_ids = array();
 		if(isset($get_sql) === false)
 		{
 			$get_sql = 'SELECT metaverse,id,cache FROM ' . self::db_tablename();
 		}
-		if(isset($mv_ids[$user_ID]) === false || $force == true)
+		if(isset(self::$mv_ids[$user_ID]) === false || $force == true)
 		{
 			if($user_ID === '')
 			{
-				$mv_ids[$user_ID] = self::wpdb()->get_results($get_sql);
+				self::$mv_ids[$user_ID] = self::wpdb()->get_results($get_sql);
 			}
 			else
 			{
-				$mv_ids[$user_ID] = self::wpdb()->get_results(self::wpdb()->prepare($get_sql . $user_sql,$user_ID));
+				self::$mv_ids[$user_ID] = self::wpdb()->get_results(self::wpdb()->prepare($get_sql . $user_sql,$user_ID));
 			}
-			foreach($mv_ids[$user_ID] as $k=>$v)
+			foreach(self::$mv_ids[$user_ID] as $k=>$v)
 			{
 				if(empty($v->cache) === false)
 				{
-					$mv_ids[$user_ID][$k]->cache = unserialize($v->cache);
+					self::$mv_ids[$user_ID][$k]->cache = unserialize($v->cache);
 				}
 			}
 		}
-		return $mv_ids[$user_ID];
+		return self::$mv_ids[$user_ID];
+	}
+	public static function admin_get_all_mv_ids_and_cache($force=false)
+	{
+		global $user_level;
+		get_currentuserinfo();
+		if($user_level < 10)
+		{
+			mv_id_plugin::report_problem('User does not have sufficient permissions to nab all IDs.');
+			return false;
+		}
+		static $get_sql;
+		if(isset($get_sql) === false)
+		{
+			$get_sql = 'SELECT user_id,metaverse,id,cache FROM ' . self::db_tablename();
+		}
+		$mv_ids = self::wpdb()->get_results($get_sql);
+		foreach($mv_ids as $k=>$row)
+		{
+			if(isset(self::$mv_ids[$row->user_id]) === false || $force == true)
+			{
+				if(empty($row->cache) === false)
+				{
+					$row->cache = unserialize($row->cache);
+				}
+				unset($row->user_id);
+				self::$mv_ids[$row->user_id][] = $row;
+			}
+			unset($mv_ids[$k]);
+		}
+		return self::$mv_ids;
 	}
 	public static function get_uncached_mv_ids($force=false,$all_users=false)
 	{
@@ -653,100 +702,88 @@ ON DUPLICATE KEY UPDATE
 	}
 	public static function javascript()
 	{
-		$ids = $mv_ids = $mv_id_formats = $mv_id_nice_names = array();
-		foreach(self::registered_metaverses() as $mv_id=>$mv_class)
+		if(isset($_GET['page']) === true && $_GET['page'] === 'mv-id')
 		{
-			$mv_ids[] = $mv_id;
-			$mv_id_formats[] = call_user_func(self::$metaverse_classes[$mv_id] . '::id_format');
-			$mv_id_nice_names[$mv_id] = mv_id_plugin::nice_name($mv_id);
-		}
-		foreach(self::get_all_mv_ids() as $mv_id)
-		{
-			if(isset($ids[$mv_id->metaverse]) === false)
+			$ids = $mv_ids = $mv_id_formats = $mv_id_nice_names = array();
+			foreach(self::registered_metaverses() as $mv_id=>$mv_class)
 			{
-				$ids[$mv_id->metaverse] = array();
+				$mv_ids[] = $mv_id;
+				$mv_id_formats[] = call_user_func(self::$metaverse_classes[$mv_id] . '::id_format');
+				$mv_id_nice_names[$mv_id] = mv_id_plugin::nice_name($mv_id);
 			}
-			$ids[$mv_id->metaverse][] = array('user'=>$mv_id->user_id,'id'=>$mv_id->id);
-		}
+			foreach(self::get_all_mv_ids() as $mv_id)
+			{
+				if(isset($ids[$mv_id->metaverse]) === false)
+				{
+					$ids[$mv_id->metaverse] = array();
+				}
+				$ids[$mv_id->metaverse][] = array('user'=>$mv_id->user_id,'id'=>$mv_id->id);
+			}
 ?>
 <script type="text/javascript">/*<![CDATA[*/
-mv_id_plugin = {
-	metaverses : <?php echo json_encode($mv_ids);?>,
-	ids        : <?php echo json_encode($ids);?>,
-	formats    : <?php echo json_encode($mv_id_formats);?>,
-	nice_names : <?php echo json_encode($mv_id_nice_names);?>,
-	add_more   : function()
-	{
-		var li = document.createElement('li');
-		var select = document.createElement('select');
-		select.name = 'add[' + mv_id_plugin__num_entries + '][metaverse]';
-		for(i in mv_id_plugin.metaverses)
-		{
-			var option = document.createElement('option');
-			option.value = mv_id_plugin.metaverses[i];
-			option.title = mv_id_plugin.formats[i];
-			option.appendChild(document.createTextNode(mv_id_plugin.nice_names[mv_id_plugin.metaverses[i]]));
-			select.appendChild(option);
-			select.appendChild(document.createTextNode("\n"));
-		}
-		var input = document.createElement('input');
-		input.type = 'text';
-		input.maxLength = 255;
-		input.name = 'add[' + (mv_id_plugin__num_entries++) + '][id]';
-		li.appendChild(select);
-		li.appendChild(input);
-		var ol = mv_id_plugin__id_div.getElementsByTagName('ol')[0];
-		ol.appendChild(li);
-	},
-	populate_select_mv : function(mv_element,ids_element,instance)
-	{
-		var select = document.getElementById(mv_element);
-				jQuery(select).empty();
-		for(i in mv_id_plugin.ids)
-		{
-			var value = i;
-			var option = '<option value="' + value + '"';
-			if(instance != undefined && instance.metaverse == value)
-			{
-				option += ' selected="selected"';
-			}
-			option += '>' + mv_id_plugin.nice_names[value] + '</option>';
-			jQuery(select).append(option + "\n");
-		}
-		mv_id_plugin.populate_select_id(mv_element,ids_element);
-		jQuery(select).change(function(){mv_id_plugin.populate_select_id(mv_element,ids_element,instance)});
-		jQuery(select).click(function(){mv_id_plugin.populate_select_id(mv_element,ids_element,instance)});
-	},
-	populate_select_id : function(mv_element,ids_element,instance)
-	{
-		var _select = document.getElementById(mv_element);
-		var select = document.getElementById(ids_element);
-		var options = _select.getElementsByTagName('option');
-		for(i in options)
-		{
-			if(options[i].selected == true)
-			{
-				jQuery(select).empty();
-				for(x in mv_id_plugin.ids[options[i].value])
-				{
-					var value = mv_id_plugin.ids[options[i].value][x].id;
-					var option = '<option value="' + value + '"';
-					if(instance != undefined && instance.id == value)
-					{
-						option += ' selected="selected"';
-					}
-					option += '>' + value + '</option>';
-					jQuery(select).append(option + "\n");
-				}
-				break;
-			}
-		}
-	}
-};
+mv_id_plugin.metaverses = <?php echo json_encode($mv_ids);?>;
+mv_id_plugin.ids        = <?php echo json_encode($ids);?>;
+mv_id_plugin.formats    = <?php echo json_encode($mv_id_formats);?>;
+mv_id_plugin.nice_names = <?php echo json_encode($mv_id_nice_names);?>;
 /*]]>*/</script>
 <?php
+		}
 	}
-	public static function user_ids()
+	public static function print_scripts()
+	{
+		if(isset($_GET['page']) && $_GET['page'] === 'mv-id')
+		{
+			wp_enqueue_script('MV-ID');
+		}
+	}
+	protected static function mv_id_trs($mv_ids)
+	{
+		if(count($mv_ids) > 0)
+		{
+?>
+		<table class="hreview">
+			<caption>Current IDs</caption>
+			<tr>
+				<th>Delete</th>
+				<th>Update</th>
+				<th>Metaverse ID</th>
+				<th>Preview</th>
+			</tr>
+<?php
+			foreach($mv_ids as $id)
+			{
+				if(self::nice_name($id->metaverse) !== false)
+				{
+					$vcard = $id->cache;
+?>
+			<tr>
+				<td><input type="checkbox" name="delete[]" value="<?php echo esc_attr($id->metaverse),'::',esc_attr($id->id); ?>" title="Delete '<?php echo $id->id; ?>' ?" /></td>
+				<td><input type="checkbox" name="update[]" value="<?php echo esc_attr($id->metaverse),'::',esc_attr($id->id); ?>" title="Update '<?php echo $id->id; ?>' ?" <?php if($vcard === NULL){ ?>checked="checked"<?php } ?> /></td>
+				<td><?php echo self::nice_name($id->metaverse); ?><br /><strong><?php echo $id->id; ?></strong><br />Shortcode:<code>[<?php echo htmlentities2(mv_id_plugin::shortcode);?> mv='<?php echo esc_attr($id->metaverse) ?>' id='<?php echo esc_attr($id->id); ?>']</code></td>
+				<td><?php
+				if($vcard instanceof mv_id_vcard_widget)
+				{
+					do_action('mv_id_plugin__output_vcard',$vcard);
+				}
+				else if($id->cache === NULL)
+				{
+	?>Profile is not yet cached.<?php
+				}
+				else
+				{
+	?>No Preview Available, possibly a problem fetching or caching the profile.<?php
+				}
+	?></td>
+			</tr>
+	<?php
+				}
+			}
+?>
+		</table>
+<?php
+		}
+	}
+	protected static function del_add_update()
 	{
 		if(isset($_POST['delete']))
 		{
@@ -780,6 +817,10 @@ mv_id_plugin = {
 				self::refresh($metaverse,$id);
 			}
 		}
+	}
+	public static function user_ids()
+	{
+		self::del_add_update();
 		$mv_ids = self::get_all_mv_ids_and_cache();
 ?>
 	<h2>Your Metaverse IDs</h2>
@@ -791,69 +832,11 @@ mv_id_plugin = {
 <?php
 		return;
 	}
-	else if(empty(self::$problems) === false)
-	{
-?>
-		<div><h3>Problems with MV-ID</h3>
-		<ol class="mv-id problems"><?php
-		foreach(self::$problems as $problem)
-		{
-?>
-			<li><?php echo htmlentities2((string)$problem); ?></li><?php
-		}
-?>
-		</ol></div>
-<?php
-	}
+	self::show_problems();
 ?>
 	<form action="<?php echo str_replace( '%7E', '~', $_SERVER['REQUEST_URI']); ?>" method="post">
 <?php
-		if(count($mv_ids) > 0)
-		{
-?>
-		<table class="hreview">
-			<caption>Current IDs</caption>
-			<tr>
-				<th>Delete</th>
-				<th>Update</th>
-				<th>Metaverse ID</th>
-				<th>Preview</th>
-			</tr>
-<?php
-
-			foreach($mv_ids as $id)
-			{
-				if(self::nice_name($id->metaverse) !== false)
-				{
-					$vcard = $id->cache;
-?>
-			<tr>
-				<td><input type="checkbox" name="delete[]" value="<?php echo esc_attr($id->metaverse),'::',esc_attr($id->id); ?>" title="Delete '<?php echo $id->id; ?>' ?" /></td>
-				<td><input type="checkbox" name="update[]" value="<?php echo esc_attr($id->metaverse),'::',esc_attr($id->id); ?>" title="Update '<?php echo $id->id; ?>' ?" <?php if($vcard === NULL){ ?>checked="checked"<?php } ?> /></td>
-				<td><?php echo self::nice_name($id->metaverse); ?><br /><strong><?php echo $id->id; ?></strong><br />Shortcode:<code>[<?php echo htmlentities2(mv_id_plugin::shortcode);?> mv='<?php echo esc_attr($id->metaverse) ?>' id='<?php echo esc_attr($id->id); ?>']</code></td>
-				<td><?php
-				if($vcard instanceof mv_id_vcard_widget)
-				{
-					do_action('mv_id_plugin__output_vcard',$vcard);
-				}
-				else if($id->cache === NULL)
-				{
-?>Profile is not yet cached.<?php
-				}
-				else
-				{
-?>No Preview Available, possibly a problem fetching or caching the profile.<?php
-				}
-?></td>
-			</tr>
-<?php
-				}
-			}
-
-?>
-		</table>
-<?php
-		}
+			self::mv_id_trs($mv_ids);
 ?>
 		<div id="add-mv-ids">
 			<h3>Add ID</h3>
@@ -887,6 +870,8 @@ mv_id_plugin__id_div.appendChild(a);
 	}
 	public static function admin()
 	{
+		self::del_add_update();
+		self::show_problems();
 		$http_api2use_label = 'mv-id::use::HTTP_API';
 		$http_api2use = get_option($http_api2use_label);
 		if(isset($_POST) && empty($_POST) === false)
@@ -993,6 +978,19 @@ mv_id_plugin__id_div.appendChild(a);
 <?php
 			}
 		}
+		$mv_ids = array();
+		$all = self::admin_get_all_mv_ids_and_cache();
+		if(empty($all) === false)
+		{
+?>
+	<h2>Metaverse IDs Registered to users.</h2>
+<?php
+			foreach($all as $_mv_ids)
+			{
+				$mv_ids = array_merge($mv_ids,$_mv_ids);
+			}
+			self::mv_id_trs($mv_ids);
+		}
 ?>
 		<input type="submit" value="Configure" />
 	</form>
@@ -1000,38 +998,6 @@ mv_id_plugin__id_div.appendChild(a);
 }
 class mv_id_plugin_widgets
 {
-	# regex nabbed from http://svn.wp-plugins.org/sem-autolink-uri/trunk/sem-autolink-uri.php
-	const regex_linkify = "/
-		\b									# word boundary
-		(
-			(?:								# link starting with a scheme
-				http(?:s)?
-			|
-				ftp
-			)
-			:\/\/
-		|
-			www\.							# link starting with no scheme
-		)
-		(
-			(								# domain
-				localhost
-			|
-				[0-9a-zA-Z_\-]+
-				(?:\.[0-9a-zA-Z_\-]+)+
-			)
-			(?:								# maybe a subdirectory
-				\/
-				[0-9a-zA-Z~_\-+\.\/,&;]*
-			)?
-			(?:								# maybe some parameters
-				\?[0-9a-zA-Z~_\-+\.\/,&;=]+
-			)?
-			(?:								# maybe an id
-				\#[0-9a-zA-Z~_\-+\.\/,&;]+
-			)?
-		)
-		/imsx";
 	public static function name($metaverse,$id)
 	{
 		return 'Metaverse ID: ' . mv_id_plugin::nice_name($metaverse) . ' (' . $id . ')';
