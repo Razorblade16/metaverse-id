@@ -70,20 +70,25 @@ class mv_id_vcard_freerealms extends mv_id_vcard
 		if(isset($data->characterList))
 		{
 			$uid = $namne = $img = $description = null;
+			$found = false;
 			foreach($data->characterList as $character)
+			{
+				if($character->charId === $id)
+				{
+					$found = true;
+					break;
+				}
+			}
+			if($found === true)
 			{
 				$uid = $character->charId;
 				$name = $character->name;
 				$img = $character->headshotUrl;
-				$description = $character->name . ' is a ' . strtolower($character->player->gender) . ' ' . $character->player->race . ' with ' . $character->player->level . ' levels, ' . $character->player->numQuests . ' quests completed and ' . $character->player->numCollections . '  collections started.';
-				break;
+				$description = $character->name . ' is a ' . strtolower($character->gender) . ' ' . $character->race . '.';
+				return new self($uid,$name,$img,$description);
 			}
-			return new self($uid,$name,$img,$description);
 		}
-		else
-		{
-			return null;
-		}
+		return null;
 	}
 	public static function get_widget(array $args)
 	{

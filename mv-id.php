@@ -3,7 +3,7 @@
 Plugin Name: Metaverse ID
 Plugin URI: http://signpostmarv.name/mv-id/
 Description: Display your identity from around the metaverse!
-Version: 1.0.1
+Version: 1.0.2
 Author: SignpostMarv Martin
 Author URI: http://signpostmarv.name/
  Copyright 2009 SignpostMarv Martin  (email : mv-id.wp@signpostmarv.name)
@@ -1189,7 +1189,6 @@ mv_id_plugin.populate_select_mv('<?php echo $this->get_field_id('metaverse'); ?>
 require_once('metaverses/second-life.php');
 require_once('metaverses/free-realms.php');
 require_once('metaverses/wow.php');
-require_once('metaverses/metaplace.php');
 require_once('metaverses/lotro.php');
 require_once('metaverses/eve.php');
 require_once('metaverses/pq.php');
