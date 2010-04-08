@@ -146,7 +146,7 @@ class mv_id_vcard_wow_eu extends mv_id_vcard_wow
 			if(is_array($data))
 			{
 				list($name,$description,$genderId,$raceId,$classId,$level,$url) = $data;
-				$image = self::format_image_url('http://eu.wowarmory.com/images/portraits/wow%s/%u-%u-%u.gif',$genderId,$raceId,$classId,$level);
+				$image = self::format_image_url('http://eu.wowarmory.com/_images/portraits/wow%s/%u-%u-%u.gif',$genderId,$raceId,$classId,$level);
 				$stats = isset($data[7]) ? $data[7] : null;
 				$guild = isset($data[8]) ? array($data[8]) : null;
 				$skills = isset($data[9]) && is_array($data[9]) ? $data[9] : null;
@@ -182,7 +182,7 @@ class mv_id_vcard_wow_us extends mv_id_vcard_wow
 			if(is_array($data))
 			{
 				list($name,$description,$genderId,$raceId,$classId,$level,$url) = $data;
-				$image = self::format_image_url('http://www.wowarmory.com/images/portraits/wow%s/%u-%u-%u.gif',$genderId,$raceId,$classId,$level);
+				$image = self::format_image_url('http://www.wowarmory.com/_images/portraits/wow%s/%u-%u-%u.gif',$genderId,$raceId,$classId,$level);
 				$stats = isset($data[7]) ? $data[7] : null;
 				$guild = isset($data[8]) ? array($data[8]) : null;
 				$skills = isset($data[9]) && is_array($data[9]) ? $data[9] : null;

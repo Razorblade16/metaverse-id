@@ -2,8 +2,8 @@
 Contributors: signpostmarv
 Tags: widget, mv-id, MV-ID, Metaverse, ID, hCard, vCard, hResume, hCalendar, vEvent, iCal, identity, profile, SL, Second Life, WoW, World of Warcraft, LotRO, Metaplace, EVE, EVE Online, Progress Quest, EverQuest, EQ, EverQuest II, EQ2
 Requires at least: 2.8
-Tested up to: 2.9.1
-Stable tag: 1.0.2
+Tested up to: 2.9.2
+Stable tag: 1.0.3
 
 Display your identity from around the metaverse!
 
@@ -54,6 +54,10 @@ If you try to update a Metaverse ID and you repeatedly get a message to the effe
 * JSON decode support (required for Free Realms)
 
 == ChangeLog ==
+
+1.0.3
+--------------------
+* Updated location of WoW images
 
 1.0.2
 --------------------
