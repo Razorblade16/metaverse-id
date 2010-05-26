@@ -39,7 +39,7 @@ class mv_id_vcard_champions extends mv_id_vcard
 	const xpath_get_level  = '//div[@id="profile_level_num"]/div';
 	const xpath_get_xp     = '//div[@id="profile_level_num"]/span';
 	const xpath_get_img    = '//img[@id="charPic"]';
-	const xpath_get_bio    = '//div[@id="characterBio"]/div/div/div[@class="content clear-block"]';
+	const xpath_get_bio    = '//div[@class="statsBioText"]';
 
 	public static function register_metaverse()
 	{

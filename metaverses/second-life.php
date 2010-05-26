@@ -35,11 +35,11 @@ class mv_id_vcard_agni_sl extends mv_id_vcard
 	const string_error_aws_internal         = '<Error><Code>InternalError</Code><Message>We encountered an internal error. Please try again.</Message>';
 	const string_error_service_unavailable  = '<html><body><b>Http/1.1 Service Unavailable</b></body> </html>';
 	const string_cond_web_profile_blocked   = 'This resident has chosen to hide their profile from search';
-	const regex_name              = '/<title>([\w\d\]{2,31}\ [\w\d]{2,50})<\/title>/S';
+	const xpath_get_name        = '//h1[@class="resident"]';
+	const xpath_get_rezday      = '//span[@class="syscat"]';
+	const xpath_get_description = '//meta[@name="description"]';
 	const regex_get_avatar        = '/<img\ alt="profile\ image"\ src="http:\/\/secondlife\.com\/app\/image\/([\w\d\-]{36})\/1"\ class="parcelimg"\ \/>/S';
 	const string_no_avatar                  = '<img alt="profile image" src="http://world.secondlife.com/images/blank.jpg" class="parcelimg" />';
-	const regex_get_description   = '/<p\ class="desc">(.*)<\/p>/S';
-	const regex_get_rezday        = '/Born\ on\:<\/span>\ ([\d]{4}\-[\d]{2}\-[\d]{2})/S';
 	public static function register_metaverse()
 	{
 		mv_id_plugin::register_metaverse('Second Life','agni SL','mv_id_vcard_agni_sl');
@@ -69,47 +69,46 @@ class mv_id_vcard_agni_sl extends mv_id_vcard
 		{
 			return $data;
 		}
-		$data = html_entity_decode( $data,ENT_QUOTES,'UTF-8');
-		static $meta_start = '<meta name="description" content="';
-		static $meta_end = '<meta name="mat"';
-		if(($start = strpos($data,$meta_start)) !== false)
-		{
-			$start += strlen($meta_start);
-			$end = strpos($data,$meta_end,$start);
-			$end = strrpos(substr($data,0,$end),'"');
-			$replace = htmlentities(substr($data,$start,$end - $start),ENT_QUOTES,'UTF-8');
-			$data = substr_replace($data,$replace,$start,$end - $start);
-		}
 		if(strpos($data,self::string_error_Resident_not_exist) !== false)
 		{
+			mv_id_plugin::report_problem('The Resident you specified does not appear to exist');
 			return null;
 		}
 		else if(strpos($data,self::string_error_aws_internal) !== false)
 		{
+			mv_id_plugin::report_problem('Problem with AWS. Please try again later.');
 			return null;
 		}
 		else if(strpos($data,self::string_error_service_unavailable) !== false)
 		{
+			mv_id_plugin::report_problem('AWS Unavailable. Please try again later.');
 			return null;
 		}
 		else if(strpos($data,self::string_cond_web_profile_blocked) !== false)
 		{
+			mv_id_plugin::report_problem('The Resident you specified has their profile blocked from search');
 			return null;
 		}
 		else
 		{
-			if(preg_match(self::regex_name,$data,$matches) === 1)
-			{
-				$name = $matches[1];
+			$doc = mv_id_plugin::DOMDocument($data);
+			if(($doc instanceof DOMDocument) === false){
+				mv_id_plugin::report_problem('Could not parse remote document.');
+				return false;				
 			}
-			else
-			{
-				return null;
+			$xpath = mv_id_plugin::XPath($doc, self::xpath_get_name);
+			if($xpath instanceof DOMNodeList){
+				$name = $xpath->item(0)->nodeValue;
+			}else{
+				mv_id_plugin::report_problem('Could not find Resident name');
+				return false;
 			}
 			$stats = array();
-			if(preg_match(self::regex_get_rezday,$data,$matches) === 1)
-			{
-				$stats[] = new mv_id_stat('bday',$matches[1]);
+			$xpath = mv_id_plugin::XPath($doc, self::xpath_get_rezday);
+			if($xpath instanceof DOMNodeList){
+				$stats[] = new mv_id_stat('bday', $xpath->item(0)->nextSibling->nextSibling->nextSibling->nodeValue);
+			}else{
+				mv_id_plugin::report_problem('Could not find rezday');
 			}
 			$image = null;
 			if(strpos($data,self::string_no_avatar) !== false)
@@ -120,26 +119,12 @@ class mv_id_vcard_agni_sl extends mv_id_vcard
 			{
 				$image = $matches[1];
 			}
+			$xpath = mv_id_plugin::XPath($doc, self::xpath_get_description);
 			$description = null;
-			if(preg_match(self::regex_get_description,$data,$matches) === 1)
-			{
-				$doc = mv_id_plugin::DOMDocument($data);
-				if($doc instanceof DOMDocument)
-				{
-					$xpath = mv_id_plugin::XPath($doc,'*//meta[@name="description"]');
-					if($xpath instanceof DOMNodeList)
-					{
-						$description = $xpath->item(0)->getAttribute('content');
-						$description = html_entity_decode($description,ENT_QUOTES,'UTF-8');
-					}
-					else
-					{
-						return false;
-					}
-				}
-				else
-				{
-					return false;
+			if($xpath instanceof DOMNodeList){
+				$description = $xpath->item(0)->getAttribute('content');
+				if(trim($description) === ''){
+					$description = null;
 				}
 			}
 			return array($name,$image,$description,$url,$stats);

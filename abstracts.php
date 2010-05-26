@@ -45,14 +45,13 @@ class mv_id_stat implements mv_id_stat_funcs
 		return $this->value;
 	}
 }
-class mv_id_stats
+class mv_id_stats implements Countable, Iterator
 {
-	protected $stats;
+	protected $stats = array();
 	public function __construct(array $stats)
 	{
 		if(empty($stats) === false)
 		{
-			$this->stats = array();
 			foreach($stats as $stat)
 			{
 				if($stat instanceof mv_id_stat_funcs)
@@ -73,6 +72,32 @@ class mv_id_stats
 	public function __get($name)
 	{
 		return $this->__isset($name) ? $this->stats[$name]->value() : null;
+	}
+
+/**
+*	From the Countable interface
+*/
+	public function count(){
+		return count($this->stats);
+	}
+
+/**
+*	From the Iterator interface
+*/
+	public function current(){
+		return current($this->stats);
+	}
+	public function next(){
+		return next($this->stats);
+	}
+	public function key(){
+		return key($this->stats);
+	}
+	public function valid(){
+		return ($this->key() !== null);
+	}
+	public function rewind(){
+		return reset($this->stats);
 	}
 }
 interface mv_id_skill_funcs extends mv_id_stat_funcs

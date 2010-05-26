@@ -3,7 +3,7 @@
 Plugin Name: Metaverse ID
 Plugin URI: http://signpostmarv.name/mv-id/
 Description: Display your identity from around the metaverse!
-Version: 1.0.3
+Version: 1.1.0
 Author: SignpostMarv Martin
 Author URI: http://signpostmarv.name/
  Copyright 2009 SignpostMarv Martin  (email : mv-id.wp@signpostmarv.name)
@@ -1062,10 +1062,10 @@ class mv_id_plugin_widgets
 		{
 			echo str_repeat("\t",6),'<p class="summary">',str_replace("\n","<br />\n",apply_filters('mv_id_linkify',htmlentities2($vcard->description()),null,array('me'))),'</p>',"\n";
 		}
-		if($vcard->stats() instanceof mv_id_stats)
+		if($vcard->stats() instanceof mv_id_stats && $vcard->stats()->count() > 0)
 		{
 			echo str_repeat("\t",6),'<ul>',"\n";
-			foreach($vcard->stats()->stats() as $stat)
+			foreach($vcard->stats() as $stat)
 			{
 				if($stat->name() === 'bday')
 				{
@@ -1095,11 +1095,11 @@ class mv_id_plugin_widgets
 				echo htmlentities2($skill->name());
 				if(is_string($skill->url()))
 				{
-					echo '</a> ';
+					echo '</a>: ';
 				}
 				else
 				{
-					echo '</span> ';
+					echo '</span>: ';
 				}
 				echo htmlentities2($skill->value()),'</li>',"\n";
 			}
@@ -1193,6 +1193,7 @@ require_once('metaverses/lotro.php');
 require_once('metaverses/eve.php');
 require_once('metaverses/pq.php');
 require_once('metaverses/champions-online.php');
+require_once('metaverses/star-trek-online.php');
 require_once('metaverses/eq.php');
 require_once('metaverses/eq2.php');
 register_activation_hook(__FILE__,'mv_id_plugin::activate');
