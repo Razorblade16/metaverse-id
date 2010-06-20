@@ -78,7 +78,7 @@ class mv_id_vcard_star_trek_online extends mv_id_vcard{
 				mv_id_plugin::report_problem('Could not find Captain\'s name');
 				return false;
 			}else{
-				$name = $xpath->item(0)->getAttribute('title');
+				$name = trim($xpath->item(0)->getAttribute('title'));
 				$img = 'http://startrekonline.com' . $xpath->item(0)->getAttribute('src');
 			}
 

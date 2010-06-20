@@ -3,7 +3,7 @@
 Plugin Name: Metaverse ID
 Plugin URI: http://signpostmarv.name/mv-id/
 Description: Display your identity from around the metaverse!
-Version: 1.1.0
+Version: 1.1.1
 Author: SignpostMarv Martin
 Author URI: http://signpostmarv.name/
  Copyright 2009 SignpostMarv Martin  (email : mv-id.wp@signpostmarv.name)
@@ -293,7 +293,8 @@ PRIMARY KEY ( `user_id`,`metaverse` , `id` )
 	public static function activate()
 	{
 		self::install();
-		wp_schedule_event(time(),'hourly','mv_id_plugin__regenerate_cache');
+		wp_clear_scheduled_hook('mv_id_plugin__regenerate_cache');
+//		wp_schedule_event(time(),'hourly','mv_id_plugin__regenerate_cache');
 	}
 	public static function deactivate()
 	{
@@ -761,8 +762,8 @@ mv_id_plugin.nice_names = <?php echo json_encode($mv_id_nice_names);?>;
 					$vcard = $id->cache;
 ?>
 			<tr>
-				<td><input type="checkbox" name="delete[]" value="<?php echo esc_attr($id->metaverse),'::',esc_attr($id->id); ?>" title="Delete '<?php echo $id->id; ?>' ?" /></td>
-				<td><input type="checkbox" name="update[]" value="<?php echo esc_attr($id->metaverse),'::',esc_attr($id->id); ?>" title="Update '<?php echo $id->id; ?>' ?" <?php if($vcard === NULL){ ?>checked="checked"<?php } ?> /></td>
+				<td><input type="checkbox" name="delete[]" value="<?php echo esc_attr($id->metaverse),'::',esc_attr($id->id); ?>" title="Delete '<?php echo esc_attr($id->id); ?>' ?" /></td>
+				<td><input type="checkbox" name="update[]" value="<?php echo esc_attr($id->metaverse),'::',esc_attr($id->id); ?>" title="Update '<?php echo esc_attr($id->id); ?>' ?" <?php if($vcard === NULL){ ?>checked="checked"<?php } ?> /></td>
 				<td><?php echo self::nice_name($id->metaverse); ?><br /><strong><?php echo $id->id; ?></strong><br />Shortcode:<code>[<?php echo htmlentities2(mv_id_plugin::shortcode);?> mv='<?php echo esc_attr($id->metaverse) ?>' id='<?php echo esc_attr($id->id); ?>']</code></td>
 				<td><?php
 				if($vcard instanceof mv_id_vcard_widget)
@@ -850,7 +851,7 @@ mv_id_plugin.nice_names = <?php echo json_encode($mv_id_nice_names);?>;
 		foreach(self::registered_metaverses() as $mv_id=>$mv_class)
 		{
 ?>
-				<option value="<?php echo $mv_id; ?>" title="<?php echo htmlentities2(call_user_func(self::$metaverse_classes[$mv_id] . '::id_format')); ?>"><?php echo htmlentities2(mv_id_plugin::nice_name($mv_id)); ?></option>
+				<option value="<?php echo esc_attr($mv_id); ?>" title="<?php echo esc_attr(call_user_func(self::$metaverse_classes[$mv_id] . '::id_format')); ?>"><?php echo htmlentities2(mv_id_plugin::nice_name($mv_id)); ?></option>
 
 <?php
 		}
@@ -973,7 +974,8 @@ mv_id_plugin__id_div.appendChild(a);
 <?php
 				foreach($fields as $id=>$field)
 				{
-?>				<li><label for="<?php echo str_replace(' ','_',$metaverse),'-',$id; ?>"><?php echo htmlentities2($field['name']);?></label> <input id="<?php echo str_replace(' ','_',$metaverse),'-',$id; ?>" name="<?php echo $metaverse,'[',$id; ?>]" <?php if($option){ echo 'value="',$option[$id],'"';} ?> /></li>
+					$inputid = str_replace(' ','_',$metaverse) . '-' . $id;
+?>				<li><label for="<?php echo esc_attr($inputid); ?>"><?php echo htmlentities2($field['name']);?></label> <input id="<?php echo esc_attr($inputid); ?>" name="<?php echo esc_attr($metaverse . '[' . $id . ']'); ?>" <?php if($option){ echo 'value="',esc_attr($option[$id]),'"';} ?> /></li>
 <?php
 				}
 ?>
@@ -1044,11 +1046,11 @@ class mv_id_plugin_widgets
 		echo
 			str_repeat("\t",5),'<div class="hresume">',"\n",
 			str_repeat("\t",6),'<address class="contact vcard">',"\n",
-			str_repeat("\t",7),'<a class="url fn" rel="me" href="',$vcard->url(),'">',htmlentities2($vcard->name()),'</a><br />',"\n",
-			str_repeat("\t",7),'<span class="uid" style="display:none;">',$vcard->uid(),'</span>',"\n";
+			str_repeat("\t",7),'<a class="url fn" rel="me" href="',esc_url($vcard->url()),'">',htmlentities2($vcard->name()),'</a><br />',"\n",
+			str_repeat("\t",7),'<span class="uid" style="display:none;">',htmlentities2($vcard->uid()),'</span>',"\n";
 		if($vcard->img() !== null)
 		{
-			echo str_repeat("\t",7),'<img class="photo" src="',$vcard->image_url(),'" alt="',htmlentities2($vcard->name()),'"  />',"\n";
+			echo str_repeat("\t",7),'<img class="photo" src="',esc_url($vcard->image_url()),'" alt="',htmlentities2($vcard->name()),'" />',"\n";
 		}
 		echo str_repeat("\t",6),'</address>',"\n";
 		if(isset($vcard->stats()->bday))
@@ -1056,7 +1058,7 @@ class mv_id_plugin_widgets
 			echo str_repeat("\t",6),'<div class="vevent account-creation"><span class="summary"><span style="display: none;">',
 				htmlentities2($vcard->name()),'\'s',(mv_id_plugin::bday_label($vcard) === 'Created' ? ' account' : ' '),'</span>',
 				htmlentities2(mv_id_plugin::bday_label($vcard)),'</span>: <abbr class="dtstart" title="',
-				$vcard->stats()->bday,'">',date('jS M, Y',strtotime($vcard->stats()->bday)),'</abbr></div>',"\n";
+				esc_attr($vcard->stats()->bday),'">',htmlentities2(date('jS M, Y',strtotime($vcard->stats()->bday))),'</abbr></div>',"\n";
 		}
 		if($vcard->description() !== null)
 		{
@@ -1086,7 +1088,7 @@ class mv_id_plugin_widgets
 				echo str_repeat("\t",7),'<li>',"\n";
 				if(is_string($skill->url()))
 				{
-					echo '<a class="skill" rel="tag" href="',$skill->url(),'">';
+					echo '<a class="skill" rel="tag" href="',esc_url($skill->url()),'">';
 				}
 				else
 				{
@@ -1115,7 +1117,7 @@ class mv_id_plugin_widgets
 					echo str_repeat("\t",8),'<li class="affiliation vcard"><span class="fn org">';
 					if( $affiliation->url() !== false)
 					{
-						echo '<a class="url" href="',$affiliation->url(),'">';
+						echo '<a class="url" href="',esc_url($affiliation->url()),'">';
 					}
 					echo htmlentities($affiliation->name(),ENT_QUOTES,'UTF-8');
 					if($affiliation->url() !== false)
@@ -1125,7 +1127,7 @@ class mv_id_plugin_widgets
 					echo '</span>';
 					if($affiliation->img() !== null && $affiliation->img() !== false)
 					{
-						echo '<br /><img class="photo" src="',$affiliation->img(),'" />';
+						echo '<br /><img class="photo" src="',esc_attr($affiliation->img()),'" />';
 					}
 					echo '</li>',"\n";
 				}
@@ -1174,10 +1176,10 @@ class mv_id_plugin_widget extends WP_Widget {
 			}
 		}
 ?>
-		<p><select id="<?php echo $this->get_field_id('metaverse'); ?>" name="<?php echo $this->get_field_name('metaverse'); ?>"></select></p>
-		<p><select id="<?php echo $this->get_field_id('id'); ?>" name="<?php echo $this->get_field_name('id'); ?>"></select></p>
+		<p><select id="<?php echo esc_attr($this->get_field_id('metaverse')); ?>" name="<?php echo esc_attr($this->get_field_name('metaverse')); ?>"></select></p>
+		<p><select id="<?php echo esc_attr($this->get_field_id('id')); ?>" name="<?php echo esc_attr($this->get_field_name('id')); ?>"></select></p>
 		<script type="text/javascript">/*<![CDATA[*/
-mv_id_plugin.populate_select_mv('<?php echo $this->get_field_id('metaverse'); ?>','<?php echo $this->get_field_id('id'),'\',',json_encode($instance); ?>);
+mv_id_plugin.populate_select_mv('<?php echo esc_js($this->get_field_id('metaverse')); ?>','<?php echo esc_js($this->get_field_id('id')),'\',',json_encode($instance); ?>);
 		/*]]>*/</script>
 <?php
 	}

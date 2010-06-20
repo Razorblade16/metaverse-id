@@ -73,7 +73,7 @@ class mv_id_vcard_champions extends mv_id_vcard
 			$xpath = mv_id_plugin::XPath($doc,self::xpath_get_name);
 			if($xpath instanceof DOMNodeList)
 			{
-				$name = $xpath->item(0)->nodeValue;
+				$name = trim($xpath->item(0)->nodeValue);
 			}
 			else
 			{

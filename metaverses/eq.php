@@ -86,7 +86,7 @@ class mv_id_vcard_eq extends mv_id_vcard
 				$xpath = mv_id_plugin::XPath($doc,'//span[@class="innerContentTitleField"]');
 				if($xpath instanceof DOMNodeList)
 				{
-					$name  = $xpath->item(0)->nodeValue;
+					$name  = trim($xpath->item(0)->nodeValue);
 					$level = self::xpath_data($id,$doc,'Level');
 					if($level === false)
 					{

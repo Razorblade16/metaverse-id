@@ -54,13 +54,13 @@ class mv_id_vcard_agni_sl extends mv_id_vcard
 	}
 	protected static function scrape($url,$last_mod=false)
 	{
-		$curl_opts = array();
+		$curl_opts = array();/*
 		if($last_mod !== false)
 		{
 			$curl_opts['headers'] = array(
 				'If-Modified-Since'=>$last_mod,
 			);
-		}
+		}*/
 		$data = mv_id_plugin::curl(
 			$url,
 			$curl_opts
@@ -93,12 +93,12 @@ class mv_id_vcard_agni_sl extends mv_id_vcard
 		{
 			$doc = mv_id_plugin::DOMDocument($data);
 			if(($doc instanceof DOMDocument) === false){
-				mv_id_plugin::report_problem('Could not parse remote document.');
+				mv_id_plugin::report_problem('Could not parse remote document for Second Life identity.');
 				return false;				
 			}
 			$xpath = mv_id_plugin::XPath($doc, self::xpath_get_name);
 			if($xpath instanceof DOMNodeList){
-				$name = $xpath->item(0)->nodeValue;
+				$name = trim($xpath->item(0)->nodeValue);
 			}else{
 				mv_id_plugin::report_problem('Could not find Resident name');
 				return false;

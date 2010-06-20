@@ -2,8 +2,8 @@
 Contributors: signpostmarv
 Tags: widget, mv-id, MV-ID, Metaverse, ID, hCard, vCard, hResume, hCalendar, vEvent, iCal, identity, profile, SL, Second Life, WoW, World of Warcraft, LotRO, Metaplace, EVE, EVE Online, Progress Quest, EverQuest, EQ, EverQuest II, EQ2, Star Trek Online, STO, Champions Online, CO
 Requires at least: 2.8
-Tested up to: 2.9.2
-Stable tag: 1.1.0
+Tested up to: 3.0
+Stable tag: 1.1.1
 
 Display your identity from around the metaverse!
 
@@ -55,6 +55,13 @@ If you try to update a Metaverse ID and you repeatedly get a message to the effe
 * JSON decode support (required for Free Realms)
 
 == ChangeLog ==
+
+1.1.1
+--------------------
+* Disabled last-modified check for Second Life identities
+* Verified compatibility with WordPress 3.0
+* Trimming all names (cleaner HTML source, negates any potential issues with css white-space property)
+* Made sure html output was correctly escaped
 
 1.1.0
 --------------------

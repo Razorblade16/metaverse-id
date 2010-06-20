@@ -96,7 +96,7 @@ class mv_id_vcard_eve extends mv_id_vcard implements mv_id_needs_admin
 			}
 			else
 			{
-				$info['name']            = mv_id_plugin::XPath($XML,'//result/name');
+				$info['name']            = trim(mv_id_plugin::XPath($XML,'//result/name'));
 				$info['gender']          = mv_id_plugin::XPath($XML,'//result/gender');
 				$info['race']            = mv_id_plugin::XPath($XML,'//result/race');
 				$info['bloodLine']       = mv_id_plugin::XPath($XML,'//result/bloodLine');

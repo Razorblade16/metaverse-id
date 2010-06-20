@@ -143,6 +143,7 @@ class mv_id_vcard_wow_eu extends mv_id_vcard_wow
 		{
 			list($realm,$name) = explode(' ',$id);
 			$data = self::scrape(sprintf('http://eu.wowarmory.com/character-sheet.xml?r=%s&n=%s',$realm,$name),$last_mod);
+			$name = trim($name);
 			if(is_array($data))
 			{
 				list($name,$description,$genderId,$raceId,$classId,$level,$url) = $data;

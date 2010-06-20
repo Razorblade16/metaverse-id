@@ -57,6 +57,7 @@ class mv_id_vcard_pq extends mv_id_vcard
 		{
 			list($name,$realm) = explode(' of ',$id);
 			$url = sprintf('http://progressquest.com/%s.php?name=%s',strtolower($realm),strtolower($name));
+			$name = trim($name);
 			$curl_opts = array();
 			if($last_mod !== false)
 			{

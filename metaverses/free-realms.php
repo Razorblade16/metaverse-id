@@ -82,7 +82,7 @@ class mv_id_vcard_freerealms extends mv_id_vcard
 			if($found === true)
 			{
 				$uid = $character->charId;
-				$name = $character->name;
+				$name = trim($character->name);
 				$img = $character->headshotUrl;
 				$description = $character->name . ' is a ' . strtolower($character->gender) . ' ' . $character->race . '.';
 				return new self($uid,$name,$img,$description);
