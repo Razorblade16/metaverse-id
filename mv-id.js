@@ -24,46 +24,33 @@ mv_id_plugin = {
 	},
 	populate_select_mv : function(mv_element,ids_element,instance)
 	{
-		var select = document.getElementById(mv_element);
-				jQuery(select).empty();
-		for(i in mv_id_plugin.ids)
-		{
-			var value = i;
-			var option = '<option value="' + value + '"';
-			if(instance != undefined && instance.metaverse == value)
-			{
-				option += ' selected="selected"';
-			}
-			option += '>' + mv_id_plugin.nice_names[value] + '</option>';
-			jQuery(select).append(option + "\n");
+		var select = jQuery('#' + mv_element);
+		jQuery(select).empty();
+		for(var i in mv_id_plugin.ids){
+			var option = jQuery('<option>' + jQuery('<option>' + mv_id_plugin.nice_names[i] + '<\/option>').text() + '<\/option>');
+			option.attr('value', i);
+			option.attr('selected', (typeof instance != 'undefined' && instance.metaverse == i));
+			select.append(option[0]);
 		}
 		mv_id_plugin.populate_select_id(mv_element,ids_element);
-		jQuery(select).change(function(){mv_id_plugin.populate_select_id(mv_element,ids_element,instance)});
-		jQuery(select).click(function(){mv_id_plugin.populate_select_id(mv_element,ids_element,instance)});
+		select.change(function(){mv_id_plugin.populate_select_id(mv_element,ids_element,instance)});
+		select.click(function(){mv_id_plugin.populate_select_id(mv_element,ids_element,instance)});
 	},
 	populate_select_id : function(mv_element,ids_element,instance)
 	{
-		var _select = document.getElementById(mv_element);
-		var select = document.getElementById(ids_element);
-		var options = _select.getElementsByTagName('option');
-		for(i in options)
-		{
-			if(options[i].selected == true)
-			{
-				jQuery(select).empty();
-				for(x in mv_id_plugin.ids[options[i].value])
-				{
-					var value = mv_id_plugin.ids[options[i].value][x].id;
-					var option = '<option value="' + value + '"';
-					if(instance != undefined && instance.id == value)
-					{
-						option += ' selected="selected"';
-					}
-					option += '>' + value + '</option>';
-					jQuery(select).append(option + "\n");
+		var _select = jQuery('#' + mv_element);
+		var select = jQuery('#' + ids_element);
+		_select.children('option').each(function(){
+			if(jQuery(this).attr('selected')){
+				select.empty();
+				for(var x in mv_id_plugin.ids[jQuery(this).attr('value')]){
+					var value = mv_id_plugin.ids[jQuery(this).attr('value')][x].id;
+					var option = jQuery('<option>' + jQuery('<option>' + value + '<\/option>').text() + '<\/option>');
+					option.attr('value',value);
+					option.attr('selected', (typeof instance != 'undefined' && instance.id == value));
+					select.append(option[0]);
 				}
-				break;
 			}
-		}
+		});
 	}
 };

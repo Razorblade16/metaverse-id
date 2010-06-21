@@ -3,7 +3,7 @@
 Plugin Name: Metaverse ID
 Plugin URI: http://signpostmarv.name/mv-id/
 Description: Display your identity from around the metaverse!
-Version: 1.1.1
+Version: 1.2
 Author: SignpostMarv Martin
 Author URI: http://signpostmarv.name/
  Copyright 2009 SignpostMarv Martin  (email : mv-id.wp@signpostmarv.name)
@@ -703,23 +703,21 @@ ON DUPLICATE KEY UPDATE
 	}
 	public static function javascript()
 	{
-		if(isset($_GET['page']) === true && $_GET['page'] === 'mv-id')
+		$ids = $mv_ids = $mv_id_formats = $mv_id_nice_names = array();
+		foreach(self::registered_metaverses() as $mv_id=>$mv_class)
 		{
-			$ids = $mv_ids = $mv_id_formats = $mv_id_nice_names = array();
-			foreach(self::registered_metaverses() as $mv_id=>$mv_class)
+			$mv_ids[] = $mv_id;
+			$mv_id_formats[] = call_user_func(self::$metaverse_classes[$mv_id] . '::id_format');
+			$mv_id_nice_names[$mv_id] = mv_id_plugin::nice_name($mv_id);
+		}
+		foreach(self::get_all_mv_ids() as $mv_id)
+		{
+			if(isset($ids[$mv_id->metaverse]) === false)
 			{
-				$mv_ids[] = $mv_id;
-				$mv_id_formats[] = call_user_func(self::$metaverse_classes[$mv_id] . '::id_format');
-				$mv_id_nice_names[$mv_id] = mv_id_plugin::nice_name($mv_id);
+				$ids[$mv_id->metaverse] = array();
 			}
-			foreach(self::get_all_mv_ids() as $mv_id)
-			{
-				if(isset($ids[$mv_id->metaverse]) === false)
-				{
-					$ids[$mv_id->metaverse] = array();
-				}
-				$ids[$mv_id->metaverse][] = array('user'=>$mv_id->user_id,'id'=>$mv_id->id);
-			}
+			$ids[$mv_id->metaverse][] = array('user'=>$mv_id->user_id,'id'=>$mv_id->id);
+		}
 ?>
 <script type="text/javascript">/*<![CDATA[*/
 mv_id_plugin.metaverses = <?php echo json_encode($mv_ids);?>;
@@ -728,14 +726,10 @@ mv_id_plugin.formats    = <?php echo json_encode($mv_id_formats);?>;
 mv_id_plugin.nice_names = <?php echo json_encode($mv_id_nice_names);?>;
 /*]]>*/</script>
 <?php
-		}
 	}
 	public static function print_scripts()
 	{
-		if(isset($_GET['page']) && $_GET['page'] === 'mv-id')
-		{
-			wp_enqueue_script('MV-ID');
-		}
+		wp_enqueue_script('MV-ID');
 	}
 	public static function widgets_init()
 	{
@@ -1179,7 +1173,7 @@ class mv_id_plugin_widget extends WP_Widget {
 		<p><select id="<?php echo esc_attr($this->get_field_id('metaverse')); ?>" name="<?php echo esc_attr($this->get_field_name('metaverse')); ?>"></select></p>
 		<p><select id="<?php echo esc_attr($this->get_field_id('id')); ?>" name="<?php echo esc_attr($this->get_field_name('id')); ?>"></select></p>
 		<script type="text/javascript">/*<![CDATA[*/
-mv_id_plugin.populate_select_mv('<?php echo esc_js($this->get_field_id('metaverse')); ?>','<?php echo esc_js($this->get_field_id('id')),'\',',json_encode($instance); ?>);
+mv_id_plugin.populate_select_mv(<?php echo json_encode(esc_js($this->get_field_id('metaverse'))); ?>,<?php echo json_encode(esc_js($this->get_field_id('id'))),',',json_encode($instance); ?>);
 		/*]]>*/</script>
 <?php
 	}

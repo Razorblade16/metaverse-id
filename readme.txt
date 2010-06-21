@@ -3,7 +3,7 @@ Contributors: signpostmarv
 Tags: widget, mv-id, MV-ID, Metaverse, ID, hCard, vCard, hResume, hCalendar, vEvent, iCal, identity, profile, SL, Second Life, WoW, World of Warcraft, LotRO, Metaplace, EVE, EVE Online, Progress Quest, EverQuest, EQ, EverQuest II, EQ2, Star Trek Online, STO, Champions Online, CO
 Requires at least: 2.8
 Tested up to: 3.0
-Stable tag: 1.1.1
+Stable tag: 1.2
 
 Display your identity from around the metaverse!
 
@@ -42,7 +42,7 @@ If you try to update a Metaverse ID and you repeatedly get a message to the effe
 2. Adding multiple profiles in one go.
 3. Profiles haven't been cached yet! Better force an update to get the profiles cached.
 4. Freshly cached profiles. Ticking the box in the `Update` column can be used to force an update of the profile cache. Shortcodes for each profile are displayed.
-5. Individual widgets for each ID!
+5. Individual widgets for each ID! Inactive widgets displayed, Second Life widget in screenshot has the [MV-ID WP Avatar](http://wordpress.org/extend/plugins/mv-id-wp-avatar/) plugin active.
 6. How the widgets look in the default WP theme.
 7. By ommitting the id parameter in the mv-id shortcode, the plugin will attempt to display all cached IDs.
 8. With the h parameter set to a number between 1 and 6, the shortcode output will include the name of the metaverse wrapped in the appropriate HTML tag.
@@ -55,6 +55,11 @@ If you try to update a Metaverse ID and you repeatedly get a message to the effe
 * JSON decode support (required for Free Realms)
 
 == ChangeLog ==
+
+1.2
+--------------------
+* Fixed bugs with the widget JavaScript
+* Updated screenshots, showing off the widgets & shortcode content in the Twenty Ten theme.
 
 1.1.1
 --------------------
