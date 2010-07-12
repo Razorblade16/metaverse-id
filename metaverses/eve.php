@@ -68,6 +68,11 @@ class mv_id_vcard_eve extends mv_id_vcard implements mv_id_needs_admin
 	{
 		if(self::is_id_valid($id) === false || ($config = get_option('mv-id::EVE')) === false)
 		{
+			if(self::is_id_valid($id) === false){
+				mv_id_plugin::report_problem('EVE Online ID is invalid');
+			}else{
+				mv_id_plugin::report_problem('EVE API details missing');
+			}
 			return false;
 		}
 		else
@@ -90,8 +95,8 @@ class mv_id_vcard_eve extends mv_id_vcard implements mv_id_needs_admin
 			{
 				return true;
 			}
-			if((($XML = mv_id_plugin::SimpleXML($data)) instanceof SimpleXMLElement) === false)
-			{
+			if((($XML = mv_id_plugin::SimpleXML($data)) instanceof SimpleXMLElement) === false){
+				mv_id_plugin::report_problem('Could not parse EVE API response as XML');
 				return false;
 			}
 			else
@@ -108,6 +113,7 @@ class mv_id_vcard_eve extends mv_id_vcard implements mv_id_needs_admin
 					}
 					else
 					{
+						mv_id_plugin::report_problem('EVE API response is missing required information');
 						return false;
 					}
 				}
