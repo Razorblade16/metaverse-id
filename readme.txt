@@ -56,6 +56,11 @@ If you try to update a Metaverse ID and you repeatedly get a message to the effe
 
 == ChangeLog ==
 
+1.2.2
+--------------------
+* Checking for EVE API error code 106
+
+
 1.2.1
 --------------------
 * Added error feedback to EVE Online plugin

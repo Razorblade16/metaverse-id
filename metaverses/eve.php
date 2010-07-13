@@ -101,6 +101,11 @@ class mv_id_vcard_eve extends mv_id_vcard implements mv_id_needs_admin
 			}
 			else
 			{
+				if(mv_id_plugin::XPath($XML, '//error[@code="106"]') !== false){
+					mv_id_plugin::report_problem('API Authentication failed, userID paramter was not passed to API');
+					return false;
+				}
+			
 				$info['name']            = trim(mv_id_plugin::XPath($XML,'//result/name'));
 				$info['gender']          = mv_id_plugin::XPath($XML,'//result/gender');
 				$info['race']            = mv_id_plugin::XPath($XML,'//result/race');
