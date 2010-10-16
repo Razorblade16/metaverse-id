@@ -91,8 +91,7 @@ class mv_id_vcard_eve extends mv_id_vcard implements mv_id_needs_admin
 				$url,
 				$curl_opts
 			);
-			if($data === true)
-			{
+			if($data === true){
 				return true;
 			}
 			if((($XML = mv_id_plugin::SimpleXML($data)) instanceof SimpleXMLElement) === false){
@@ -104,8 +103,11 @@ class mv_id_vcard_eve extends mv_id_vcard implements mv_id_needs_admin
 				if(mv_id_plugin::XPath($XML, '//error[@code="106"]') !== false){
 					mv_id_plugin::report_problem('API Authentication failed, userID paramter was not passed to API');
 					return false;
+				}else if(mv_id_plugin::XPath($XML, '//error[@code="201"]') !== false){
+					mv_id_plugin::report_problem('Could not fetch character sheet, character does not belong to account');
+					return false;
 				}
-			
+
 				$info['name']            = trim(mv_id_plugin::XPath($XML,'//result/name'));
 				$info['gender']          = mv_id_plugin::XPath($XML,'//result/gender');
 				$info['race']            = mv_id_plugin::XPath($XML,'//result/race');

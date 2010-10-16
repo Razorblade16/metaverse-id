@@ -3,7 +3,7 @@
 Plugin Name: Metaverse ID
 Plugin URI: http://signpostmarv.name/mv-id/
 Description: Display your identity from around the metaverse!
-Version: 1.2.2
+Version: 1.2.3
 Author: SignpostMarv Martin
 Author URI: http://signpostmarv.name/
  Copyright 2009 SignpostMarv Martin  (email : mv-id.wp@signpostmarv.name)
@@ -157,24 +157,19 @@ class mv_id_plugin
 			else
 			{
 				$_curl_opts = array();
-				if(isset($curl_opts['headers']) === true)
-				{
-					if(isset($curl_opts['headers']['If-Modified-Since']) === true)
-					{
+				if(isset($curl_opts['headers']) === true){
+					if(isset($curl_opts['headers']['If-Modified-Since']) === true){
 						$_curl_opts[CURLOPT_TIMEVALUE] = $curl_opts['headers']['If-Modified-Since'];
 					}
-					if(isset($curl_opts['method']) && $curl_opts['method'] === 'post')
-					{
-						$_curl_opts[CURLOPT_POST] = true;
-						if(isset($curl_opts['body']) === true)
-						{
-							$_curl_opts[CURLOPT_POSTFIELDS] = $curl_opts['body'];
-						}
+				}
+				if(isset($curl_opts['method']) && $curl_opts['method'] === 'post'){
+					$_curl_opts[CURLOPT_POST] = true;
+					if(isset($curl_opts['body']) === true){
+						$_curl_opts[CURLOPT_POSTFIELDS] = $curl_opts['body'];
 					}
-					if(isset($curl_opts['user-agent']) === true)
-					{
-						$_curl_opts[CURLOPT_USERAGENT] = $curl_opts['user-agent'];
-					}
+				}
+				if(isset($curl_opts['user-agent']) === true){
+					$_curl_opts[CURLOPT_USERAGENT] = $curl_opts['user-agent'];
 				}
 				$curl_opts = $_curl_opts;
 			}
@@ -186,13 +181,10 @@ class mv_id_plugin
 			{
 				$curl_opts[CURLOPT_RETURNTRANSFER] = true;
 			}
-			$no_hack_needed = (ini_get('safe_mode') !== '1' && ini_get('open_basedir') === false);
-			if($no_hack_needed)
-			{
+			$no_hack_needed = (ini_get('safe_mode') !== '1' && ini_get('open_basedir') == false);
+			if($no_hack_needed){
 				$curl_opts[CURLOPT_FOLLOWLOCATION] = true;
-			}
-			else
-			{
+			}else{
 				$curl_opts[CURLOPT_FOLLOWLOCATION] = false;
 				$curl_opts[CURLOPT_HEADER] = true;
 			}
@@ -202,22 +194,17 @@ class mv_id_plugin
 			}
 			curl_setopt_array($ch,$curl_opts);
 			$data = curl_exec($ch);
-			if($no_hack_needed === false)
-			{
+			if($no_hack_needed === false){
 				$redirects = 5;
-				while($redirects>0)
-				{
-					if(($pos = strpos($data,'Location: http')) !== false)
-					{
+				while($redirects>0){
+					if(($pos = strpos($data,'Location: http')) !== false){
 						$pos = strpos($data,'http',$pos);
 						$url = substr($data,$pos,strpos($data,"\r\n",$pos) - $pos);
 						$ch = curl_init($url);
 						curl_setopt_array($ch,$curl_opts);
 						$data = curl_exec($ch);
 						--$redirects;
-					}
-					else
-					{
+					}else{
 						$redirects = 0;
 					}
 				}
