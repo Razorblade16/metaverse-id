@@ -108,18 +108,14 @@ class mv_id_vcard_eve extends mv_id_vcard implements mv_id_needs_admin
 					return false;
 				}
 
-				$info['name']            = trim(mv_id_plugin::XPath($XML,'//result/name'));
+				$info['name']            = mv_id_plugin::XPath($XML,'//result/name');
 				$info['gender']          = mv_id_plugin::XPath($XML,'//result/gender');
 				$info['race']            = mv_id_plugin::XPath($XML,'//result/race');
 				$info['bloodLine']       = mv_id_plugin::XPath($XML,'//result/bloodLine');
-				foreach($info as $k=>$v)
-				{
-					if($v)
-					{
-						$info[$k] = (string)$v[0];
-					}
-					else
-					{
+				foreach($info as $k=>$v){
+					if($v){
+						$info[$k] = trim((string)$v[0]);
+					}else{
 						mv_id_plugin::report_problem('EVE API response is missing required information');
 						return false;
 					}
