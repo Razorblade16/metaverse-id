@@ -35,10 +35,10 @@ class mv_id_vcard_agni_sl extends mv_id_vcard
 	const string_error_aws_internal         = '<Error><Code>InternalError</Code><Message>We encountered an internal error. Please try again.</Message>';
 	const string_error_service_unavailable  = '<html><body><b>Http/1.1 Service Unavailable</b></body> </html>';
 	const string_cond_web_profile_blocked   = 'This resident has chosen to hide their profile from search';
-	const xpath_get_name        = '//h1[@class="resident"]';
-	const xpath_get_rezday      = '//span[@class="syscat"]';
-	const xpath_get_description = '//meta[@name="description"]';
-	const regex_get_avatar        = '/<img\ alt="profile\ image"\ src="http:\/\/secondlife\.com\/app\/image\/([\w\d\-]{36})\/1"\ class="parcelimg"\ \/>/S';
+	const xpath_get_name                    = '//h1[@class="resident"]';
+	const xpath_get_rezday                  = '//span[@class="syscat"]';
+	const xpath_get_description             = '//meta[@name="description"]';
+	const regex_get_avatar                  = '/<img\ alt="profile\ image"\ src="http:\/\/secondlife\.com\/app\/image\/([\w\d\-]{36})\/1"\ class="parcelimg"\ \/>/S';
 	const string_no_avatar                  = '<img alt="profile image" src="http://world.secondlife.com/images/blank.jpg" class="parcelimg" />';
 	public static function register_metaverse()
 	{
@@ -54,13 +54,6 @@ class mv_id_vcard_agni_sl extends mv_id_vcard
 	}
 	protected static function scrape($url,$last_mod=false)
 	{
-		$curl_opts = array();/*
-		if($last_mod !== false)
-		{
-			$curl_opts['headers'] = array(
-				'If-Modified-Since'=>$last_mod,
-			);
-		}*/
 		$data = mv_id_plugin::curl(
 			$url,
 			$curl_opts
@@ -106,7 +99,8 @@ class mv_id_vcard_agni_sl extends mv_id_vcard
 			$stats = array();
 			$xpath = mv_id_plugin::XPath($doc, self::xpath_get_rezday);
 			if($xpath instanceof DOMNodeList){
-				$stats[] = new mv_id_stat('bday', $xpath->item(0)->nextSibling->nextSibling->nextSibling->nodeValue);
+				$rezday = explode('-', substr(trim($xpath->item(0)->nextSibling->nodeValue),0,10));
+				$stats[] = new mv_id_stat('bday', $rezday[0] . '-' . $rezday[2] . '-' . $rezday[1]);
 			}else{
 				mv_id_plugin::report_problem('Could not find rezday');
 			}
@@ -157,8 +151,8 @@ class mv_id_vcard_agni_sl extends mv_id_vcard
 }
 class mv_id_vcard_teen_sl extends mv_id_vcard_agni_sl
 {
-	const sprintf_url = 'http://teen.world.secondlife.com/resident/%1$s';
-	const sprintf_scrape = 'http://teen.world.secondlife.com/resident/%1$s';
+	const sprintf_url = 'http://world.secondlife.com/resident/%1$s';
+	const sprintf_scrape = 'http://world.secondlife.com/resident/%1$s';
 	public static function register_metaverse()
 	{
 		mv_id_plugin::register_metaverse('Teen SL','teen SL','mv_id_vcard_teen_sl');
@@ -188,6 +182,17 @@ class mv_id_vcard_teen_sl extends mv_id_vcard_agni_sl
 		self::get_widgets('teen SL',$args);
 	}
 }
+
+function filter__mv_id_secondlife_display_name($hresume, mv_id_vcard $vcard){
+	if($vcard instanceof mv_id_vcard_agni_sl){
+		if(preg_match('/^(.+) \(([A-z\d]+\.[A-z\d]+)\)$/',$vcard->name(),$matches) === 1){
+			$hresume = str_replace('>' . $vcard->name() . '</a>', '><span title="' . esc_attr($matches[2]) . '">' . esc_html($matches[1]) . '</span></a>', $hresume);
+		}
+	}
+	return $hresume;
+}
 add_action('mv_id_plugin__register_metaverses','mv_id_vcard_agni_sl::register_metaverse');
 add_action('mv_id_plugin__register_metaverses','mv_id_vcard_teen_sl::register_metaverse');
+
+add_filter('post_output_mv_id_vcard', 'filter__mv_id_secondlife_display_name', 10, 2);
 ?>
