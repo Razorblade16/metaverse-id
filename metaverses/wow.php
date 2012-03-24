@@ -29,6 +29,37 @@ abstract class mv_id_vcard_wow extends mv_id_vcard
 {
 	const sprintf_url = '#';
 	const sprintf_img = '%s';
+	
+	protected static function classes($id){
+		static $classes;
+		if(isset($classes) === false){
+			$_classes = json_decode('{"classes":[{"id":3,"mask":4,"powerType":"focus","name":"Hunter"},{"id":4,"mask":8,"powerType":"energy","name":"Rogue"},{"id":1,"mask":1,"powerType":"rage","name":"Warrior"},{"id":2,"mask":2,"powerType":"mana","name":"Paladin"},{"id":7,"mask":64,"powerType":"mana","name":"Shaman"},{"id":8,"mask":128,"powerType":"mana","name":"Mage"},{"id":5,"mask":16,"powerType":"mana","name":"Priest"},{"id":6,"mask":32,"powerType":"runic-power","name":"Death Knight"},{"id":11,"mask":1024,"powerType":"mana","name":"Druid"},{"id":9,"mask":256,"powerType":"mana","name":"Warlock"}]}')->classes;
+			$__classes = array();
+			foreach($_classes as $_class){
+				$__classes[$_class->id] = $_class;
+			}
+			$classes = $__classes;
+			unset($__classes, $_classes, $_class);
+		}
+		return $classes[$id];
+	}
+
+	protected static function races($id){
+		static $races;
+		if(isset($races) === false){
+			$_races = json_decode('{"races":[{"id":11,"mask":1024,"side":"alliance","name":"Draenei"},{"id":1,"mask":1,"side":"alliance","name":"Human"},{"id":5,"mask":16,"side":"horde","name":"Undead"},{"id":7,"mask":64,"side":"alliance","name":"Gnome"},{"id":8,"mask":128,"side":"horde","name":"Troll"},{"id":2,"mask":2,"side":"horde","name":"Orc"},{"id":3,"mask":4,"side":"alliance","name":"Dwarf"},{"id":4,"mask":8,"side":"alliance","name":"Night Elf"},{"id":10,"mask":512,"side":"horde","name":"Blood Elf"},{"id":22,"mask":2097152,"side":"alliance","name":"Worgen"},{"id":6,"mask":32,"side":"horde","name":"Tauren"},{"id":9,"mask":256,"side":"horde","name":"Goblin"}]}')->races;
+			$__races = array();
+			foreach($_races as $_race){
+				$__races[$_race->id] = $_race;
+			}
+			$races = $__races;
+			unset($__races, $_races, $_race);
+		}
+		return $races[$id];
+	}
+	
+	const json_classes = '{"classes":[{"id":3,"mask":4,"powerType":"focus","name":"Hunter"},{"id":4,"mask":8,"powerType":"energy","name":"Rogue"},{"id":1,"mask":1,"powerType":"rage","name":"Warrior"},{"id":2,"mask":2,"powerType":"mana","name":"Paladin"},{"id":7,"mask":64,"powerType":"mana","name":"Shaman"},{"id":8,"mask":128,"powerType":"mana","name":"Mage"},{"id":5,"mask":16,"powerType":"mana","name":"Priest"},{"id":6,"mask":32,"powerType":"runic-power","name":"Death Knight"},{"id":11,"mask":1024,"powerType":"mana","name":"Druid"},{"id":9,"mask":256,"powerType":"mana","name":"Warlock"}]}';
+	
 	public static function id_format()
 	{
 		return '\'Realm Username\', e.g. \'Alonsus Axilo\'';
@@ -37,30 +68,12 @@ abstract class mv_id_vcard_wow extends mv_id_vcard
 	{
 		return (bool)preg_match('/^(\w+)\ (\w+)$/',$id);
 	}
-	protected static function format_image_url($sprintf_url,$genderId,$raceId,$classId,$level)
-	{
-		$level_blurb = '-default';
-		if($level >= 80)
-		{
-			$level_blurb = '-80';
-		}
-		else if($level >= 70)
-		{
-			$level_blurb = '-70';
-		}
-		else if($level >= 60)
-		{
-			$level_blurb = '';
-		}
-		return sprintf($sprintf_url,$level_blurb,$genderId,$raceId,$classId);
-	}
 	public static function affiliations_label()
 	{
 		return 'Guild';
 	}
 	protected static function scrape($url,$last_mod=false)
 	{
-		$curl_opts = array('user-agent' => 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.1.1) Gecko/20090715 Firefox/3.5.1');
 		if($last_mod !== false)
 		{
 			$curl_opts['headers'] = array(
@@ -68,7 +81,7 @@ abstract class mv_id_vcard_wow extends mv_id_vcard
 			);
 		}
 		$curl_opts['headers'][CURLOPT_HTTPHEADER] = array(
-			'Accept:text/xml'
+			'Accept:application/json'
 		);
 		$data = mv_id_plugin::curl(
 			$url,
@@ -78,52 +91,43 @@ abstract class mv_id_vcard_wow extends mv_id_vcard
 		{
 			return true;
 		}
-		if((($XML = mv_id_plugin::SimpleXML($data)) instanceof SimpleXMLElement) === false)
+		$data = json_decode($data);
+		if(is_object($data) === false)
 		{
 			return false;
 		}
 		else
 		{
-			unset($data);
-			$xpath = mv_id_plugin::XPath($XML,'/page/characterInfo/character');
-			if($xpath !== false)
-			{
-				foreach($xpath[0]->attributes() as $attribute => $value)
-				{
-					$$attribute = (string)$value;
-				}
-				if($last_mod !== false && (strtotime($lastModified) <= $last_mod))
-				{
-					return false;
-				}
-				$skills = array();
-				$skills[] = new mv_id_skill('Achievement Points',(int)$points,'http://www.wowwiki.com/Achievement');
-				$description = '"' . $prefix . $name . $suffix . '" is a level ' . $level . ' ' . strtolower($gender) . ' ' . $race . ' ' . $class . ', and can be found on the ' . $realm . ' realm.';
-				$url = str_replace('&n=','&amp;n=',$url);
-				$guild = null;
-				if(isset($guildName) && empty($guildName) === false)
-				{
-					$guild = new mv_id_vcard_affiliation($guildName,substr($url,0,strpos($url,'/character-sheet.xml')) . '/guild-info.xml?r=' . $realm . '&amp;gn=' . urlencode($guildName));
-				}
-				$xpath = mv_id_plugin::XPath($XML,'//professions/skill');
-				if(empty($xpath) === false)
-				{
-					foreach($xpath as $skill)
-					{
-						foreach($skill->attributes() as $attribute => $value)
-						{
-							$attribute = '_' . $attribute;
-							$$attribute = (string)$value;
-						}
-						$skills[] = new mv_id_skill($_name,(int)$_value,sprintf('http://www.wowwiki.com/%s',$_name));
+			$title = '%s';
+			foreach($data->titles as $_title){
+				if(isset($_title->selected) && $_title->selected === true){
+					$title = $_title->name;
+					break;
+				}				
+			}
+			$name = sprintf($title, $data->name);
+			$description = $data->name . ' is a level ' . $data->level . ' ' . ($data->gender === 1 ? 'female' : 'male') . ' ' . static::races($data->race)->name . ' ' . static::classes($data->class)->name . ', and can be found on the ' . $data->realm . ' realm.';
+			$url = sprintf('http://battle.net/wow/en/character/%1$s/%2$s/simple', $data->realm, $data->name);
+			$skills = array(
+				new mv_id_skill('Achievement Points',(int)$data->achievementPoints,'http://www.wowpedia.org/Achievement')
+			);
+			if(isset($data->professions) === true){
+				if(isset($data->professions->primary) === true){
+					foreach($data->professions->primary as $profession){
+						$skills[] = new mv_id_skill($profession->name, $profession->rank, sprintf('http://battle.net/wow/profession/%s', $profession->name));
 					}
 				}
-				return array($name,$description,$genderId,$raceId,$classId,$level,$url,null,$guild,$skills);
+				if(isset($data->professions->secondary) === true){
+					foreach($data->professions->secondary as $profession){
+						$skills[] = new mv_id_skill($profession->name, $profession->rank, sprintf('http://battle.net/wow/profession/%s', $profession->name));
+					}
+				}
 			}
-			else
-			{
-				return false;
+			$guild = null;
+			if(isset($data->guild) === true){
+				$guild = new mv_id_vcard_affiliation($data->guild->name, sprintf('http://battle.net/wow/en/guild/%1$s/%2$s/', $data->realm, $data->guild->name));
 			}
+			return array($name, $description, $url, $data->thumbnail, $guild, count($skills) > 1 ? $skills : null);
 		}
 	}
 }
@@ -142,16 +146,13 @@ class mv_id_vcard_wow_eu extends mv_id_vcard_wow
 		else
 		{
 			list($realm,$name) = explode(' ',$id);
-			$data = self::scrape(sprintf('http://eu.wowarmory.com/character-sheet.xml?r=%s&n=%s',$realm,$name),$last_mod);
+			$data = self::scrape(sprintf('http://eu.battle.net/api/wow/character/%1$s/%2$s?fields=guild,professions,titles',$realm,$name),$last_mod);
 			$name = trim($name);
 			if(is_array($data))
 			{
-				list($name,$description,$genderId,$raceId,$classId,$level,$url) = $data;
-				$image = self::format_image_url('http://eu.wowarmory.com/_images/portraits/wow%s/%u-%u-%u.gif',$genderId,$raceId,$classId,$level);
-				$stats = isset($data[7]) ? $data[7] : null;
-				$guild = isset($data[8]) ? array($data[8]) : null;
-				$skills = isset($data[9]) && is_array($data[9]) ? $data[9] : null;
-				return new self($id,$name,$image,$description,$url,$stats,$guild,$skills);
+				list($name,$description,$url, $thumbnail, $guild, $skills) = $data;
+				$image = 'http://eu.battle.net/static-render/eu/' . $thumbnail;
+				return new self($id,$name,$image,$description,$url,null,$guild,$skills);
 			}
 			else
 			{
@@ -179,15 +180,13 @@ class mv_id_vcard_wow_us extends mv_id_vcard_wow
 		else
 		{
 			list($realm,$name) = explode(' ',$id);
-			$data = self::scrape(sprintf('http://www.wowarmory.com/character-sheet.xml?r=%s&n=%s',$realm,$name));
+			$data = self::scrape(sprintf('http://us.battle.net/api/wow/character/%1$s/%2$s?fields=guild,professions,titles',$realm,$name),$last_mod);
+			$name = trim($name);
 			if(is_array($data))
 			{
-				list($name,$description,$genderId,$raceId,$classId,$level,$url) = $data;
-				$image = self::format_image_url('http://www.wowarmory.com/_images/portraits/wow%s/%u-%u-%u.gif',$genderId,$raceId,$classId,$level);
-				$stats = isset($data[7]) ? $data[7] : null;
-				$guild = isset($data[8]) ? array($data[8]) : null;
-				$skills = isset($data[9]) && is_array($data[9]) ? $data[9] : null;
-				return new self($id,$name,$image,$description,$url,$stats,$guild,$skills);
+				list($name,$description,$url, $thumbnail, $guild, $skills) = $data;
+				$image = 'http://us.battle.net/static-render/us/' . $thumbnail;
+				return new self($id,$name,$image,$description,$url,null,$guild,$skills);
 			}
 			else
 			{
