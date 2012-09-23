@@ -125,7 +125,7 @@ abstract class mv_id_vcard_wow extends mv_id_vcard
 			}
 			$guild = null;
 			if(isset($data->guild) === true){
-				$guild = new mv_id_vcard_affiliation($data->guild->name, sprintf('http://battle.net/wow/en/guild/%1$s/%2$s/', $data->realm, $data->guild->name));
+				$guild = array(new mv_id_vcard_affiliation($data->guild->name, sprintf('http://battle.net/wow/en/guild/%1$s/%2$s/', $data->realm, $data->guild->name)));
 			}
 			return array($name, $description, $url, $data->thumbnail, $guild, count($skills) > 1 ? $skills : null);
 		}
