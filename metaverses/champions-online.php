@@ -30,11 +30,11 @@ class mv_id_vcard_champions extends mv_id_vcard
 	const plugin_nice_name = 'Champions Online';
 	const plugin_metaverse = 'CO';
 	const regex_id = '/^(\d+)$/';
-	
+
 	const sprintf_url = 'http://champions-online.com/character_profiles/%1$u';
 	const sprintf_url_bio  = 'http://champions-online.com/character_profiles/%1$u/biography';
 	const sprintf_url_img  = 'http://champions-online.com/%2$s';
-	
+
 	const xpath_get_name   = '//div[@id="profile_champ"]/div[@class="name"]';
 	const xpath_get_level  = '//div[@id="profile_level_num"]/div';
 	const xpath_get_xp     = '//div[@id="profile_level_num"]/span';

@@ -31,7 +31,7 @@ class mv_id_vcard_eq extends mv_id_vcard
 	const plugin_metaverse = 'EQ';
 	const sprintf_url = 'http://eqplayers.station.sony.com/character_profile.vm?characterId=%1$s';
 	const sprintf_img = '%s';
-	
+
 	const sprintf_description = '%1$s is a level %2$u %3$s %4$s.';
 
 	const regex_class = '/^(\w+)[\ ]{1,2}\((\d+)\)$/';

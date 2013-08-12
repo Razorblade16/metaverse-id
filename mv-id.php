@@ -378,7 +378,7 @@ PRIMARY KEY ( `user_id`,`metaverse` , `id` )
 			static $add_sql;
 			if(isset($add_sql) === false)
 			{
-				$add_sql = 
+				$add_sql =
 'INSERT INTO ' . self::db_tablename() . ' (user_id,metaverse,id) VALUES(%s,%s,%s)
 ON DUPLICATE KEY UPDATE
 	cache=NULL';
