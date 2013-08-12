@@ -324,9 +324,9 @@ PRIMARY KEY ( `user_id`,`metaverse` , `id` )
 			}
 		}
 	}
-	protected static function refresh($metaverse,$id)
+	protected static function refresh($metaverse,$id,$ignore_last_mod=false)
 	{
-		$vcard = call_user_func_array(self::$metaverse_classes[$metaverse] . '::factory',array($id,self::get_mv_id_last_mod($metaverse,$id)));
+		$vcard = call_user_func_array(self::$metaverse_classes[$metaverse] . '::factory',array($id,$ignore_last_mod ? false : self::get_mv_id_last_mod($metaverse,$id)));
 		if(isset($vcard) && ($vcard instanceof mv_id_vcard_widget))
 		{
 			self::cache($metaverse,$id,$vcard);
@@ -776,16 +776,13 @@ mv_id_plugin.nice_names = <?php echo json_encode($mv_id_nice_names);?>;
 		{
 			foreach($_POST['delete'] as $delete_this)
 			{
-				list($metaverse,$id) = explode('::',$delete_this);
-				self::delete($metaverse,$id);
-				unset($_POST['delete'][$delete_this]);
-				if(isset($_POST['add'],$_POST['add'][$metaverse],$_POST['add'][$metaverse][$id]))
-				{
-					unset($_POST['add'][$metaverse][$id]);
-				}
-				if(isset($_POST['update']) && ($pos = array_search($delete_this,$_POST['update'])) !== false)
-				{
-					unset($_POST['update'][$pos]);
+				if(!isset($_POST['update']) || !in_array($delete_this, $_POST['update'])){
+					list($metaverse,$id) = explode('::',$delete_this);
+					self::delete($metaverse,$id);
+					if(isset($_POST['add'],$_POST['add'][$metaverse],$_POST['add'][$metaverse][$id]))
+					{
+						unset($_POST['add'][$metaverse][$id]);
+					}
 				}
 			}
 		}
@@ -801,7 +798,7 @@ mv_id_plugin.nice_names = <?php echo json_encode($mv_id_nice_names);?>;
 			foreach($_POST['update'] as $update_this)
 			{
 				list($metaverse,$id) = explode('::',$update_this);
-				self::refresh($metaverse,$id);
+				self::refresh($metaverse,$id,isset($_POST['delete']) && in_array($update_this, $_POST['delete']));
 			}
 		}
 	}
