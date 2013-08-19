@@ -87,7 +87,7 @@ class mv_id_vcard_agni_sl extends mv_id_vcard
 			$doc = mv_id_plugin::DOMDocument($data);
 			if(($doc instanceof DOMDocument) === false){
 				mv_id_plugin::report_problem('Could not parse remote document for Second Life identity.');
-				return false;				
+				return false;
 			}
 			$xpath = mv_id_plugin::XPath($doc, self::xpath_get_name);
 			if($xpath instanceof DOMNodeList){

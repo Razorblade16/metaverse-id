@@ -29,7 +29,7 @@ abstract class mv_id_vcard_wow extends mv_id_vcard
 {
 	const sprintf_url = '#';
 	const sprintf_img = '%s';
-	
+
 	protected static function classes($id){
 		static $classes;
 		if(isset($classes) === false){
@@ -57,9 +57,9 @@ abstract class mv_id_vcard_wow extends mv_id_vcard
 		}
 		return $races[$id];
 	}
-	
+
 	const json_classes = '{"classes":[{"id":3,"mask":4,"powerType":"focus","name":"Hunter"},{"id":4,"mask":8,"powerType":"energy","name":"Rogue"},{"id":1,"mask":1,"powerType":"rage","name":"Warrior"},{"id":2,"mask":2,"powerType":"mana","name":"Paladin"},{"id":7,"mask":64,"powerType":"mana","name":"Shaman"},{"id":8,"mask":128,"powerType":"mana","name":"Mage"},{"id":5,"mask":16,"powerType":"mana","name":"Priest"},{"id":6,"mask":32,"powerType":"runic-power","name":"Death Knight"},{"id":11,"mask":1024,"powerType":"mana","name":"Druid"},{"id":9,"mask":256,"powerType":"mana","name":"Warlock"}]}';
-	
+
 	public static function id_format()
 	{
 		return '\'Realm Username\', e.g. \'Alonsus Axilo\'';
@@ -103,7 +103,7 @@ abstract class mv_id_vcard_wow extends mv_id_vcard
 				if(isset($_title->selected) && $_title->selected === true){
 					$title = $_title->name;
 					break;
-				}				
+				}
 			}
 			$name = sprintf($title, $data->name);
 			$description = $data->name . ' is a level ' . $data->level . ' ' . ($data->gender === 1 ? 'female' : 'male') . ' ' . static::races($data->race)->name . ' ' . static::classes($data->class)->name . ', and can be found on the ' . $data->realm . ' realm.';

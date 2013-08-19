@@ -155,7 +155,7 @@ class mv_id_linkify
 
 		return $buffer;
 	}
-	
+
 	#
 	# sem_autolink_uri_escape_anchors()
 	#
@@ -172,7 +172,7 @@ class mv_id_linkify
 
 		return $anchor_id;
 	} # end sem_autolink_uri_escape_anchors()
-	
+
 	#
 	# sem_autolink_uri_unescape_anchors()
 	#
@@ -190,8 +190,8 @@ class mv_id_linkify
 
 		return str_replace($find, $replace, $input);
 	} # end sem_autolink_uri_unescape_anchors()
-	
-	
+
+
 	#
 	# sem_autolink_uri_add_links()
 	#
