@@ -3,7 +3,7 @@
 Plugin Name: Metaverse ID
 Plugin URI: http://signpostmarv.name/mv-id/
 Description: Display your identity from around the metaverse!
-Version: 1.2.7
+Version: 1.2.8
 Author: SignpostMarv Martin
 Author URI: http://signpostmarv.name/
  Copyright 2009 - 2012 SignpostMarv Martin  (email : mv-id.wp@signpostmarv.name)
